@@ -26,6 +26,16 @@
 
 **Recent Major Changes:**
 
+### 🐛 **node-pty Native Module Fix (Jan 19, 2026)**
+
+- **Issue**: `posix_spawnp failed` error on Apple Silicon (ARM64) Macs due to missing executable permissions on `spawn-helper` binary
+- **Root Cause**: pnpm doesn't preserve executable permissions when extracting packages
+- **Solution**: Added `postinstall` script (`scripts/fix-node-pty-permissions.js`) that automatically fixes permissions after installation
+- **Files Changed**:
+  - Added `scripts/fix-node-pty-permissions.js` - Cross-platform permission fixer
+  - Updated `package.json` - Added `postinstall` script and included fix script in `files` array
+- **Impact**: Shelly now works correctly on all platforms without manual intervention
+
 ### 🔄 **TypeScript Migration (JUST COMPLETED - Oct 28, 2025)**
 
 - **Complete Source Migration**: All `.js` files in `src/` converted to `.ts`

@@ -9,6 +9,7 @@
   "scripts": {
     "build": "tsc && npm run copy-templates",
     "copy-templates": "node scripts/copy-templates.js",
+    "postinstall": "node scripts/fix-node-pty-permissions.js",
     "start": "npm run build && node dist/main.js",
     "test": "npm run build && node --test dist/tests/*.test.js",
     "prepublishOnly": "npm run build",
@@ -64,6 +65,7 @@
   },
   "files": [
     "dist/",
+    "scripts/fix-node-pty-permissions.js",
     "src/shelly/templates/",
     "README.md",
     "package.json",
@@ -102,7 +104,7 @@
     "@octokit/rest": "^20.0.2",
     "commander": "^11.0.0",
     "inquirer": "^12.9.6",
-    "node-pty": "0.10.1",
+    "node-pty": "1.1.0",
     "ps-tree": "^1.2.0"
   },
   "prettier": {
