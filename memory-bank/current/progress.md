@@ -6,6 +6,14 @@ Shelly has successfully evolved from a simple CLI error analysis tool into a com
 
 ## 🎯 **Completed Features**
 
+### ✅ **node-pty Native Module Fix (Jan 19, 2026)**
+
+- **Bug Fix**: Resolved `posix_spawnp failed` error on Apple Silicon Macs
+- **Root Cause**: pnpm doesn't preserve executable permissions on `spawn-helper` binary
+- **Solution**: Added automatic `postinstall` script to fix permissions
+- **Cross-Platform**: Works with npm, pnpm, and yarn installations
+- **Graceful Handling**: Skips Windows (not affected), doesn't fail install on errors
+
 ### ✅ **TypeScript Migration (JUST COMPLETED - Oct 28, 2025)**
 
 - **Complete Source Migration**: All JavaScript files converted to TypeScript
