@@ -1,0 +1,291 @@
+/**
+ * Test Setup Configuration for {{projectName}}
+ *
+ * This file is automatically loaded before running tests.
+ * Configure test environment, mocks, and global utilities here.
+ *
+ * @generated {{date}}
+ * @owner {{owner}}
+ */
+
+import { vi, beforeAll, afterAll, expect } from 'vitest';
+import type { Mock } from 'vitest';
+import { config } from 'dotenv';
+import { resolve } from 'path';
+
+// ============================================================================
+// ENVIRONMENT CONFIGURATION
+// ============================================================================
+
+// Load test environment variables from .env.test (if exists), then .env
+const envFiles = ['.env.test', '.env.test.local', '.env'];
+
+for (const file of envFiles) {
+  config({ path: resolve(process.cwd(), file), override: true });
+}
+
+// Set test-specific environment defaults
+process.env.NODE_ENV = 'test';
+process.env.LOG_LEVEL = process.env.LOG_LEVEL || 'error'; // Reduce noise in tests
+process.env.AI_PROVIDER = process.env.AI_PROVIDER || 'mock'; // Use mock AI in tests
+
+// ============================================================================
+// TEST ENVIRONMENT DEFAULTS
+// ============================================================================
+
+/**
+ * Default environment values for testing.
+ * These are used when actual env vars are not set.
+ */
+const testDefaults: Record<string, string> = {
+  // Application
+  PORT: '3001',
+  APP_URL: 'http://localhost:3001',
+
+  // Database (use test database)
+  DATABASE_URL: 'postgresql://test:test@localhost:5432/{{repoName}}_test',
+
+  // AI Configuration (mock by default)
+  AI_ENABLED: 'false',
+  AI_TIMEOUT: '5000',
+  AI_MAX_RETRIES: '1',
+
+  // Disable external services in tests
+  SENTRY_DSN: '',
+  ANALYTICS_ENABLED: 'false',
+
+  // Logging
+  LOG_FORMAT: 'json',
+  VERBOSE: 'false',
+};
+
+// Apply defaults for missing env vars
+for (const [key, value] of Object.entries(testDefaults)) {
+  if (!process.env[key]) {
+    process.env[key] = value;
+  }
+}
+
+// ============================================================================
+// GLOBAL TEST UTILITIES
+// ============================================================================
+
+/**
+ * Extend global scope for test utilities.
+ * Access these anywhere in your tests without imports.
+ */
+declare global {
+  // eslint-disable-next-line no-var
+  var testUtils: TestUtilities;
+}
+
+interface TestUtilities {
+  /** Generate a random string for test data */
+  randomString: (length?: number) => string;
+  /** Generate a random email for test users */
+  randomEmail: () => string;
+  /** Wait for a specified number of milliseconds */
+  wait: (ms: number) => Promise<void>;
+  /** Create a mock function that tracks calls */
+  createSpy: <T extends (...args: unknown[]) => unknown>() => Mock<T>;
+}
+
+globalThis.testUtils = {
+  randomString: (length = 10) => {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    return Array.from(
+      { length },
+      () => chars[Math.floor(Math.random() * chars.length)]
+    ).join('');
+  },
+
+  randomEmail: () => {
+    return `test-${globalThis.testUtils.randomString(8)}@example.com`;
+  },
+
+  wait: (ms: number) => new Promise((resolve) => setTimeout(resolve, ms)),
+
+  createSpy: <T extends (...args: unknown[]) => unknown>() => {
+    return vi.fn() as Mock<T>;
+  },
+};
+
+// ============================================================================
+// GLOBAL MOCKS
+// ============================================================================
+
+/**
+ * Mock console methods to reduce noise (optional).
+ * Remove or modify if you need to see console output in tests.
+ */
+if (process.env.SUPPRESS_CONSOLE !== 'false') {
+  const originalConsole = { ...console };
+
+  beforeAll(() => {
+    console.log = vi.fn();
+    console.info = vi.fn();
+    console.debug = vi.fn();
+    // Keep error and warn for debugging
+    // console.error = vi.fn();
+    // console.warn = vi.fn();
+  });
+
+  afterAll(() => {
+    console.log = originalConsole.log;
+    console.info = originalConsole.info;
+    console.debug = originalConsole.debug;
+  });
+}
+
+// ============================================================================
+// TIMEOUT CONFIGURATION
+// ============================================================================
+
+/**
+ * Default test timeout is configured in vitest.config.ts.
+ * Override per-test with: test('name', { timeout: 30000 }, async () => { ... })
+ * Or set TEST_TIMEOUT environment variable in vitest.config.ts testTimeout option.
+ */
+
+// ============================================================================
+// MOCK FACTORIES
+// ============================================================================
+
+/**
+ * Factory functions for creating test data.
+ * Extend these based on your application's domain models.
+ */
+export const factories = {
+  /**
+   * Create a mock user object
+   */
+  user: (overrides = {}) => ({
+    id: globalThis.testUtils.randomString(12),
+    email: globalThis.testUtils.randomEmail(),
+    name: `Test User ${globalThis.testUtils.randomString(4)}`,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    ...overrides,
+  }),
+
+  /**
+   * Create mock API response
+   */
+  apiResponse: <T>(data: T, overrides = {}) => ({
+    success: true,
+    data,
+    timestamp: new Date().toISOString(),
+    ...overrides,
+  }),
+
+  /**
+   * Create mock error response
+   */
+  errorResponse: (message = 'Test error', code = 'TEST_ERROR') => ({
+    success: false,
+    error: {
+      code,
+      message,
+    },
+    timestamp: new Date().toISOString(),
+  }),
+};
+
+// ============================================================================
+// DATABASE HELPERS (for integration tests)
+// ============================================================================
+
+/**
+ * Database helpers for integration tests.
+ * Uncomment and configure based on your database setup.
+ */
+// import { PrismaClient } from '@prisma/client';
+//
+// let prisma: PrismaClient;
+//
+// beforeAll(async () => {
+//   prisma = new PrismaClient();
+//   await prisma.$connect();
+// });
+//
+// afterAll(async () => {
+//   await prisma.$disconnect();
+// });
+//
+// beforeEach(async () => {
+//   // Clear test data before each test
+//   // await prisma.user.deleteMany();
+// });
+
+// ============================================================================
+// CUSTOM MATCHERS
+// ============================================================================
+
+/**
+ * Extend Vitest with custom matchers.
+ * Add application-specific assertions here.
+ */
+expect.extend({
+  /**
+   * Check if a value is a valid ISO date string
+   */
+  toBeISODateString(received: unknown) {
+    const pass =
+      typeof received === 'string' && !isNaN(Date.parse(received));
+    return {
+      pass,
+      message: () =>
+        pass
+          ? `expected ${received} not to be a valid ISO date string`
+          : `expected ${received} to be a valid ISO date string`,
+    };
+  },
+
+  /**
+   * Check if an object has all required keys
+   */
+  toHaveKeys(received: unknown, keys: string[]) {
+    const pass =
+      typeof received === 'object' &&
+      received !== null &&
+      keys.every((key) => key in received);
+    return {
+      pass,
+      message: () =>
+        pass
+          ? `expected object not to have keys: ${keys.join(', ')}`
+          : `expected object to have keys: ${keys.join(', ')}`,
+    };
+  },
+});
+
+// Type augmentation for custom matchers
+declare module 'vitest' {
+  interface Assertion<T = unknown> {
+    toBeISODateString(): T;
+    toHaveKeys(keys: string[]): T;
+  }
+  interface AsymmetricMatchersContaining {
+    toBeISODateString(): unknown;
+    toHaveKeys(keys: string[]): unknown;
+  }
+}
+
+// ============================================================================
+// CLEANUP
+// ============================================================================
+
+/**
+ * Global cleanup after all tests complete.
+ */
+afterAll(async () => {
+  // Clean up any global resources
+  // Close database connections, clear timers, etc.
+});
+
+// ============================================================================
+// EXPORTS
+// ============================================================================
+
+export { testDefaults, factories };
+export default {};

@@ -1,0 +1,230 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "_comment": "MCP Server Configuration for {{projectName}} - Generated: {{date}}",
+  "_docs": "https://modelcontextprotocol.io/introduction",
+
+  "mcpServers": {
+
+    "_section_filesystem": "=== FILE SYSTEM & LOCAL OPERATIONS ===",
+
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "{{projectRoot}}"],
+      "description": "Read, write, and manage local files",
+      "enabled": true
+    },
+
+    "filesystem-readonly": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "--read-only", "{{projectRoot}}"],
+      "description": "Read-only file access for safety",
+      "enabled": false
+    },
+
+    "_section_git": "=== VERSION CONTROL ===",
+
+    "git": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-git", "{{projectRoot}}"],
+      "description": "Git operations: status, diff, commit, branch",
+      "enabled": true
+    },
+
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_TOKEN": "{{GITHUB_TOKEN}}"
+      },
+      "description": "GitHub API: issues, PRs, repos, actions",
+      "enabled": true
+    },
+
+    "gitlab": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-gitlab"],
+      "env": {
+        "GITLAB_TOKEN": "{{GITLAB_TOKEN}}",
+        "GITLAB_URL": "{{GITLAB_URL}}"
+      },
+      "description": "GitLab API integration",
+      "enabled": false
+    },
+
+    "_section_databases": "=== DATABASES ===",
+
+    "postgresql": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres"],
+      "env": {
+        "POSTGRES_CONNECTION_STRING": "{{DATABASE_URL}}"
+      },
+      "description": "PostgreSQL database operations",
+      "enabled": false
+    },
+
+    "sqlite": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sqlite", "{{projectRoot}}/data/database.sqlite"],
+      "description": "SQLite database for local development",
+      "enabled": false
+    },
+
+    "_section_cloud": "=== CLOUD PROVIDERS ===",
+
+    "aws-kb-retrieval": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-aws-kb-retrieval"],
+      "env": {
+        "AWS_ACCESS_KEY_ID": "{{AWS_ACCESS_KEY_ID}}",
+        "AWS_SECRET_ACCESS_KEY": "{{AWS_SECRET_ACCESS_KEY}}",
+        "AWS_REGION": "{{AWS_REGION}}"
+      },
+      "description": "AWS Bedrock Knowledge Base retrieval",
+      "enabled": false
+    },
+
+    "google-maps": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-google-maps"],
+      "env": {
+        "GOOGLE_MAPS_API_KEY": "{{GOOGLE_MAPS_API_KEY}}"
+      },
+      "description": "Google Maps location services",
+      "enabled": false
+    },
+
+    "_section_web": "=== WEB & BROWSER ===",
+
+    "fetch": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-fetch"],
+      "description": "HTTP fetch for web content and APIs",
+      "enabled": true
+    },
+
+    "puppeteer": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-puppeteer"],
+      "description": "Browser automation and web scraping",
+      "enabled": false
+    },
+
+    "_section_search": "=== SEARCH & KNOWLEDGE ===",
+
+    "brave-search": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+      "env": {
+        "BRAVE_API_KEY": "{{BRAVE_API_KEY}}"
+      },
+      "description": "Web search via Brave Search API",
+      "enabled": false
+    },
+
+    "_section_memory": "=== MEMORY & KNOWLEDGE BASE ===",
+
+    "memory": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"],
+      "description": "Persistent memory across sessions",
+      "enabled": true
+    },
+
+    "_section_productivity": "=== PRODUCTIVITY & COLLABORATION ===",
+
+    "slack": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-slack"],
+      "env": {
+        "SLACK_BOT_TOKEN": "{{SLACK_BOT_TOKEN}}",
+        "SLACK_TEAM_ID": "{{SLACK_TEAM_ID}}"
+      },
+      "description": "Slack messaging and channels",
+      "enabled": false
+    },
+
+    "google-drive": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-gdrive"],
+      "env": {
+        "GOOGLE_DRIVE_CREDENTIALS": "{{GOOGLE_DRIVE_CREDENTIALS}}"
+      },
+      "description": "Google Drive file management",
+      "enabled": false
+    },
+
+    "_section_devtools": "=== DEVELOPMENT TOOLS ===",
+
+    "sentry": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sentry"],
+      "env": {
+        "SENTRY_AUTH_TOKEN": "{{SENTRY_AUTH_TOKEN}}",
+        "SENTRY_ORG": "{{SENTRY_ORG}}"
+      },
+      "description": "Sentry error tracking integration",
+      "enabled": false
+    },
+
+    "sequential-thinking": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+      "description": "Dynamic and reflective problem-solving through thought sequences",
+      "enabled": false
+    },
+
+    "_section_utilities": "=== UTILITIES ===",
+
+    "time": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-time"],
+      "description": "Time, date, and timezone utilities",
+      "enabled": true
+    },
+
+    "everart": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-everart"],
+      "env": {
+        "EVERART_API_KEY": "{{EVERART_API_KEY}}"
+      },
+      "description": "AI image generation with EverArt",
+      "enabled": false
+    },
+
+    "_section_custom": "=== CUSTOM SERVERS ===",
+
+    "custom-local": {
+      "command": "node",
+      "args": ["{{projectRoot}}/mcp-servers/custom-server.js"],
+      "description": "Custom local MCP server",
+      "enabled": false
+    },
+
+    "custom-python": {
+      "command": "python",
+      "args": ["-m", "mcp_server", "--port", "3001"],
+      "description": "Custom Python MCP server",
+      "enabled": false
+    }
+  },
+
+  "_instructions": {
+    "getting_started": [
+      "1. Copy this file to your project root as .mcp-servers.json",
+      "2. Set enabled: true for servers you want to use",
+      "3. Replace {{placeholders}} with actual values or use environment variables",
+      "4. Run 'shelly mcp test' to verify connections"
+    ],
+    "environment_variables": [
+      "Placeholders like {{GITHUB_TOKEN}} can reference .env variables",
+      "The system will automatically substitute from process.env"
+    ],
+    "adding_custom_servers": [
+      "Add new entries to mcpServers object",
+      "Required fields: command, args, description, enabled",
+      "Optional fields: env, cwd, timeout"
+    ]
+  }
+}

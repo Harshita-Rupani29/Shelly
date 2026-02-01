@@ -1,0 +1,157 @@
+# Development Guidelines
+
+## Purpose
+
+This document contains development guidelines, patterns, and conventions for {{projectName}}.
+
+---
+
+## Code Standards
+
+### Language & Framework
+
+- **Primary Language**: TypeScript/JavaScript
+- **Runtime**: Node.js 20+
+- **Package Manager**: {{packageManager}}
+
+### Formatting & Linting
+
+- **Formatter**: Prettier
+- **Linter**: ESLint with TypeScript support
+- **Pre-commit**: Husky + lint-staged
+
+### Commit Convention
+
+Format: `type(scope): description`
+
+**Types**:
+
+- `feat`: New feature
+- `fix`: Bug fix
+- `docs`: Documentation changes
+- `style`: Code style changes (formatting, etc.)
+- `refactor`: Code refactoring
+- `test`: Adding or modifying tests
+- `chore`: Maintenance tasks
+- `perf`: Performance improvements
+- `ci`: CI/CD changes
+- `build`: Build system changes
+
+---
+
+## Architecture Patterns
+
+### Directory Structure
+
+```
+src/
+├── commands/       # CLI command handlers
+├── services/       # Business logic services
+├── utils/          # Utility functions
+├── types/          # TypeScript type definitions
+└── index.ts        # Main entry point
+```
+
+### Design Patterns
+
+1. **Service Pattern**: Encapsulate business logic in services
+2. **Command Pattern**: CLI commands are isolated handlers
+3. **Dependency Injection**: Services receive dependencies via constructor
+
+---
+
+## Development Workflow
+
+### Branch Strategy
+
+- `release` - Production branch
+- `main` - Staging/integration
+- `feature/*` - Feature branches
+- `fix/*` - Bug fix branches
+
+### Single Commit Policy
+
+Each feature branch must have exactly ONE commit before merging.
+
+**Workflow**:
+
+1. Create feature branch from `release`
+2. Make changes and commit
+3. Squash if multiple commits exist
+4. Create PR targeting `release`
+5. Squash merge on approval
+
+---
+
+## Testing Guidelines
+
+### Test Structure
+
+```
+tests/
+├── unit/           # Unit tests
+├── integration/    # Integration tests
+└── fixtures/       # Test fixtures
+```
+
+### Running Tests
+
+```bash
+npm test              # Run all tests
+npm run test:watch    # Watch mode
+npm run test:coverage # With coverage
+```
+
+---
+
+## Build & Deploy
+
+### Build Process
+
+```bash
+npm run build         # Compile TypeScript
+npm run build:watch   # Watch mode
+```
+
+### Release Process
+
+1. Merge to `release` branch
+2. Semantic Release auto-bumps version
+3. NPM package published automatically
+4. GitHub release created
+
+---
+
+## Common Tasks
+
+### Adding a New Command
+
+1. Create command file in `src/commands/`
+2. Register in CLI entry point
+3. Add tests
+4. Update documentation
+
+### Adding a New Service
+
+1. Create service in `src/services/`
+2. Export from index
+3. Add unit tests
+4. Document public API
+
+---
+
+## Troubleshooting
+
+### Build Issues
+
+- Clear `dist/` and rebuild
+- Check TypeScript errors with `npx tsc --noEmit`
+
+### Test Issues
+
+- Ensure fixtures exist
+- Check for async test timeouts
+
+---
+
+_Last Updated: {{date}}_

@@ -1,154 +1,192 @@
-# Branch Protection Configuration
+# GitHub Branch Protection Configuration
 
-> Guidelines for setting up branch protection rules for {{projectName}}
+This document outlines the recommended branch protection settings for {{projectName}}.
 
-## Overview
+## Required Settings for Release Branch
 
-This document outlines the recommended branch protection settings for the {{repoName}} repository to ensure code quality and security.
+Configure these settings in **Settings > Branches > Branch protection rules** for the `release` branch.
 
-## Main/Master Branch Protection
+### Pull Request Requirements
 
-### Required Settings
+- [x] **Require a pull request before merging**
+  - [x] Require approvals: **1** (minimum)
+  - [x] Dismiss stale pull request approvals when new commits are pushed
+  - [x] Require review from Code Owners (if CODEOWNERS file exists)
+  - [ ] Restrict who can dismiss pull request reviews (optional)
+  - [ ] Require approval of the most recent reviewable push (optional)
 
-#### Require a pull request before merging
-- ✅ **Require approvals**: 2 approving reviews
-- ✅ **Dismiss stale PR approvals when new commits are pushed**
-- ✅ **Require review from code owners**
-- ✅ **Restrict pushes that create files larger than 100MB**
+### Status Checks
 
-#### Require status checks to pass before merging
-- ✅ **Require branches to be up to date before merging**
-- ✅ **Status checks that are required**:
-  - `CI / test (pull_request)`
-  - `CI / lint (pull_request)`
-  - `CI / build (pull_request)`
-  - `Dependency Review / dependency-review (pull_request)`
+- [x] **Require status checks to pass before merging**
+  - [x] Require branches to be up to date before merging
+  - Add required checks:
+    - `build` (CI workflow)
+    - `test` (test workflow)
+    - `lint` (linting workflow)
 
-#### Require conversation resolution before merging
-- ✅ **Require conversation resolution before merging**
+### Commit Requirements
 
-#### Require signed commits
-- ✅ **Require signed commits**
+- [ ] **Require signed commits** (optional, recommended for high-security projects)
+- [x] **Require linear history** (ensures clean git history)
 
-#### Require linear history
-- ✅ **Require linear history**
+### Merge Settings
 
-#### Require deployments to succeed before merging
-- ✅ **Required deployment environments before merge**: `staging`
+- [x] **Allow squash merging** (preferred method)
+- [x] **Disable merge commits** (keeps history clean)
+- [x] **Disable rebase merging** (prevents accidental history rewrites)
 
-### Additional Rules
+### Enforcement
 
-#### Restrict pushes that create files
-- ✅ **Block pushes that contain secrets**
-- ✅ **Block pushes that contain files larger than 100MB**
+- [x] **Do not allow bypassing the above settings**
+- [x] **Restrict who can push to matching branches** (optional)
+  - Limit to specific teams or users if needed
 
-#### Lock branch
-- ❌ **Lock branch** (only enable for maintenance mode)
+---
 
-#### Do not allow bypassing the above settings
-- ✅ **Include administrators**
-- ✅ **Restrict pushes that create files**
+## Repository General Settings
 
-## Development Branch Protection
+Navigate to **Settings > General** and configure:
 
-For development branches (`develop`, `staging`):
+### Pull Requests Section
 
-### Required Settings
-- ✅ **Require approvals**: 1 approving review
-- ✅ **Require status checks to pass**
-- ✅ **Require branches to be up to date**
-- ❌ **Require signed commits** (optional)
-- ❌ **Require linear history** (optional)
+1. **Allow squash merging**: Enabled
+   - Default commit message: "Pull request title and description"
+2. **Allow merge commits**: Disabled
+3. **Allow rebase merging**: Disabled
+4. **Always suggest updating pull request branches**: Enabled
+5. **Automatically delete head branches**: Enabled
 
-## Feature Branch Protection
+---
 
-For feature branches (`feature/*`, `fix/*`):
+## CLI Configuration Alternative
 
-### Recommended Settings
-- ✅ **Require status checks to pass**
-- ❌ **Require approvals** (optional for feature branches)
-- ❌ **Require signed commits** (optional)
-
-## Implementation
-
-### Via GitHub UI
-
-1. Go to **Settings** → **Branches**
-2. Click **Add rule**
-3. Set branch name pattern (e.g., `main`, `master`)
-4. Configure protection settings as outlined above
-5. Save the rule
-
-### Via GitHub CLI
+You can configure branch protection using the GitHub CLI:
 
 ```bash
-# Enable branch protection for main branch
-gh api repos/{{maintainerUsername}}/{{repoName}}/branches/main/protection \
+# Set branch protection rules using gh api
+gh api \
   --method PUT \
-  --field required_status_checks='{"strict":true,"contexts":["CI / test","CI / lint","CI / build"]}' \
-  --field enforce_admins=true \
-  --field required_pull_request_reviews='{"required_approving_review_count":2,"dismiss_stale_reviews":true,"require_code_owner_reviews":true}' \
-  --field restrictions=null
+  -H "Accept: application/vnd.github+json" \
+  /repos/{{owner}}/{{repoName}}/branches/release/protection \
+  -f required_status_checks='{"strict":true,"contexts":["build","test","lint"]}' \
+  -f enforce_admins=true \
+  -f required_pull_request_reviews='{"dismiss_stale_reviews":true,"require_code_owner_reviews":true,"required_approving_review_count":1}' \
+  -f restrictions=null \
+  -f required_linear_history=true \
+  -f allow_force_pushes=false \
+  -f allow_deletions=false
 ```
 
-### Via Terraform
+### Configure Repository Settings
 
-```hcl
-resource "github_branch_protection" "main" {
-  repository_id = "{{repoName}}"
-  pattern       = "main"
-
-  required_status_checks {
-    strict = true
-    contexts = [
-      "CI / test",
-      "CI / lint", 
-      "CI / build"
-    ]
-  }
-
-  required_pull_request_reviews {
-    required_approving_review_count = 2
-    dismiss_stale_reviews          = true
-    require_code_owner_reviews     = true
-  }
-
-  enforce_admins = true
-}
+```bash
+# Disable merge commits and rebase, keep only squash
+gh api \
+  --method PATCH \
+  -H "Accept: application/vnd.github+json" \
+  /repos/{{owner}}/{{repoName}} \
+  -f allow_squash_merge=true \
+  -f allow_merge_commit=false \
+  -f allow_rebase_merge=false \
+  -f delete_branch_on_merge=true \
+  -f squash_merge_commit_title="PR_TITLE" \
+  -f squash_merge_commit_message="PR_BODY"
 ```
 
-## Monitoring
+---
 
-### Regular Reviews
+## Verification Steps
 
-- **Monthly**: Review branch protection settings
-- **Quarterly**: Audit bypass attempts and failures
-- **After incidents**: Review and update rules if needed
+After configuring branch protection, verify the settings:
 
-### Metrics to Track
+1. **Test PR Creation**
+   ```bash
+   git checkout -b test/branch-protection
+   echo "test" > test-file.txt
+   git add . && git commit -m "test: verify branch protection"
+   git push origin test/branch-protection
+   gh pr create --title "Test: Branch Protection" --body "Testing branch protection rules"
+   ```
 
-- Number of protection rule violations
-- Average time to merge PRs
-- Code review coverage
-- Failed status checks
+2. **Verify Checks Are Required**
+   - Attempt to merge without passing CI - should be blocked
+   - Verify "Require status checks" shows expected checks
+
+3. **Verify Squash-Only Merge**
+   - When merging, only "Squash and merge" option should be available
+
+4. **Verify Linear History**
+   - Attempt to push merge commits - should be rejected
+
+5. **Clean Up Test**
+   ```bash
+   gh pr close --delete-branch
+   ```
+
+---
+
+## Benefits
+
+| Setting | Benefit |
+|---------|---------|
+| Required reviews | Ensures code quality through peer review |
+| Dismiss stale reviews | Prevents merging outdated approvals |
+| Required status checks | Catches bugs before merge |
+| Up-to-date branches | Prevents integration issues |
+| Linear history | Clean, readable git history |
+| Squash-only merging | One commit per feature, easy to revert |
+| Auto-delete branches | Keeps repository clean |
+
+---
 
 ## Troubleshooting
 
 ### Common Issues
 
-**Status checks not appearing**
-- Ensure CI workflows are properly configured
-- Check that status check names match exactly
+#### "Required status check is expected"
+- **Cause**: The CI workflow hasn't run yet or uses a different job name
+- **Solution**: Ensure your workflow job names match the required checks exactly
+- **Fix**: Update branch protection to use correct check names from Actions tab
 
-**Unable to merge despite approvals**
-- Verify all required status checks are passing
-- Check if branch is up to date with base branch
+#### "This branch has no conflicts but cannot be merged"
+- **Cause**: Branch is not up to date with the base branch
+- **Solution**: Update your branch:
+  ```bash
+  git fetch origin release
+  git rebase origin/release
+  git push --force-with-lease
+  ```
 
-**Administrators cannot bypass**
-- This is by design when "Include administrators" is enabled
-- Temporarily disable protection to make emergency changes
+#### "Merge commits are not allowed"
+- **Cause**: Attempting to use merge commit instead of squash
+- **Solution**: Use the GitHub UI "Squash and merge" button, or:
+  ```bash
+  gh pr merge --squash
+  ```
 
-## References
+#### "Linear history required"
+- **Cause**: Branch contains merge commits
+- **Solution**: Rebase your branch to create linear history:
+  ```bash
+  git rebase -i origin/release
+  git push --force-with-lease
+  ```
 
-- [GitHub Branch Protection Documentation](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/about-protected-branches)
-- [Best Practices for Branch Protection](https://github.blog/2016-09-26-securing-your-repositories/)
+#### "Review required"
+- **Cause**: No approving reviews or reviews are stale
+- **Solution**: Request a new review after pushing changes
+
+#### Status checks not appearing
+- **Cause**: Workflow file syntax error or trigger mismatch
+- **Solution**:
+  1. Check Actions tab for workflow errors
+  2. Verify workflow triggers include `pull_request`
+  3. Ensure job names match required checks
+
+---
+
+## Related Documentation
+
+- [GitHub Branch Protection Documentation](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches)
+- [CODEOWNERS File](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners)
+- [Required Status Checks](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-status-checks-before-merging)

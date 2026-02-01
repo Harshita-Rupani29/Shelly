@@ -1,0 +1,157 @@
+{
+  "name": "{{packageName}}",
+  "version": "0.0.0-development",
+  "description": "{{description}}",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "{{binName}}": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "build:prod": "npm run clean && npm run build && npm run build:check",
+    "build:check": "node scripts/build-validations.cjs",
+    "build:action": "ncc build src/action/index.ts -o action-dist --license licenses.txt",
+    "build:complete": "npm run build && npm run build:action",
+    "clean": "rimraf dist coverage .tsbuildinfo",
+    "prebuild": "npm run clean",
+    "start": "node dist/cli.js",
+    "start:dev": "npm run build && npm run start",
+    "dev": "tsx watch src/cli.ts",
+    "lint": "eslint . --ext .js,.ts --cache",
+    "lint:fix": "eslint . --ext .js,.ts --fix --cache",
+    "lint:strict": "eslint . --ext .js,.ts --max-warnings 0",
+    "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{js,ts,json,md,yml,yaml}\"",
+    "format:staged": "node scripts/format-staged.cjs",
+    "format:changelog": "node scripts/format-changelog.cjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "test:ci": "vitest run --reporter=junit --outputFile=./test-results.xml",
+    "test:smart": "node scripts/smart-test.cjs",
+    "test:providers": "vitest run test/providers",
+    "test:performance": "vitest run test/performance",
+    "typecheck": "tsc --noEmit",
+    "typecheck:watch": "tsc --noEmit --watch",
+    "docs": "typedoc",
+    "docs:watch": "typedoc --watch",
+    "docs:serve": "typedoc && npx serve docs",
+    "validate": "npm run lint && npm run typecheck && npm run test",
+    "validate:all": "npm run validate:env && npm run validate:security && npm run validate && npm run build:check",
+    "validate:env": "node scripts/env-validation.cjs",
+    "validate:security": "node scripts/security-check.cjs",
+    "validate:commit": "node scripts/commit-validation.cjs",
+    "validate:deps": "npm audit --audit-level=moderate",
+    "validate:links": "markdown-link-check README.md CONTRIBUTING.md",
+    "quality": "npm run quality:metrics",
+    "quality:metrics": "node scripts/quality-metrics.cjs",
+    "quality:report": "node scripts/quality-metrics.cjs --report",
+    "organize": "node scripts/organize-project.cjs",
+    "organize:check": "node scripts/organize-project.cjs --check",
+    "release": "semantic-release",
+    "release:dry": "semantic-release --dry-run",
+    "changelog": "conventional-changelog -p conventionalcommits -i CHANGELOG.md -s",
+    "version": "npm run changelog && git add CHANGELOG.md",
+    "prepare": "husky install",
+    "prepublishOnly": "npm run validate:all && npm run build:prod",
+    "postinstall": "node scripts/postinstall.cjs || exit 0",
+    "setup": "npm install && npm run build && npm run validate",
+    "setup:complete": "npm run setup && npm run build:action",
+    "reset": "npm run clean && rimraf node_modules && npm install",
+    "doctor": "npm run validate:env && npm run validate:deps && npm run typecheck",
+    "ai:config": "node dist/cli.js config --show",
+    "ai:test": "node dist/cli.js config --test-ai",
+    "ai:providers": "node dist/cli.js config --list-providers",
+    "mcp:test": "node scripts/mcp-test.cjs",
+    "memory:init": "node dist/cli.js memory init",
+    "memory:sync": "node dist/cli.js memory sync"
+  },
+  "keywords": [
+    "cli",
+    "typescript",
+    "ai",
+    "neurolink"
+  ],
+  "author": "{{owner}}",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "{{repositoryUrl}}.git"
+  },
+  "bugs": {
+    "url": "{{repositoryUrl}}/issues"
+  },
+  "homepage": "{{repositoryUrl}}#readme",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "packageManager": "npm@10.2.0",
+  "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "@vitest/coverage-v8": "^1.0.0",
+    "@vitest/ui": "^1.0.0",
+    "c8": "^9.0.0",
+    "conventional-changelog-cli": "^4.0.0",
+    "conventional-changelog-conventionalcommits": "^7.0.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-import": "^2.29.0",
+    "husky": "^9.0.0",
+    "lint-staged": "^15.0.0",
+    "markdown-link-check": "^3.11.0",
+    "prettier": "^3.2.0",
+    "rimraf": "^5.0.0",
+    "semantic-release": "^23.0.0",
+    "tsx": "^4.0.0",
+    "typedoc": "^0.25.0",
+    "typedoc-plugin-markdown": "^4.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  },
+  "dependencies": {
+    "commander": "^12.0.0",
+    "dotenv": "^16.3.0"
+  },
+  "optionalDependencies": {
+    "@juspay/neurolink": "^1.0.0"
+  },
+  "lint-staged": {
+    "*.{js,ts}": [
+      "eslint --fix --cache",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ],
+    "package.json": [
+      "npx sort-package-json"
+    ]
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

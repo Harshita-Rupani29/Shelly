@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "data-analysis",
+  "description": "AI-assisted data analysis workflow for {{projectName}}",
+  "version": "1.0.0",
+  "variables": {
+    "dataSource": {
+      "type": "string",
+      "required": true,
+      "description": "Path to data file or data description"
+    },
+    "analysisType": {
+      "type": "string",
+      "required": false,
+      "default": "exploratory",
+      "enum": ["exploratory", "statistical", "trend", "comparative", "predictive"],
+      "description": "Type of analysis to perform"
+    },
+    "outputFormat": {
+      "type": "string",
+      "required": false,
+      "default": "report",
+      "enum": ["report", "summary", "visualization-code", "insights-only"],
+      "description": "Desired output format"
+    }
+  },
+  "steps": [
+    {
+      "id": "understand",
+      "name": "Understand Data Structure",
+      "prompt": "Analyze the data structure from:\n{{dataSource}}\n\nProvide:\n1. Data schema/columns description\n2. Data types for each field\n3. Sample data overview\n4. Potential data quality issues\n5. Recommended preprocessing steps",
+      "outputVariable": "dataUnderstanding"
+    },
+    {
+      "id": "analyze",
+      "name": "Perform {{analysisType}} Analysis",
+      "prompt": "Based on data understanding:\n{{dataUnderstanding}}\n\nPerform {{analysisType}} analysis:\n1. Key metrics and statistics\n2. Patterns and trends\n3. Correlations and relationships\n4. Anomalies or outliers\n5. Significant findings",
+      "outputVariable": "analysisResults",
+      "dependsOn": ["understand"]
+    },
+    {
+      "id": "visualize",
+      "name": "Generate Visualization Code",
+      "prompt": "Based on analysis results:\n{{analysisResults}}\n\nGenerate code for visualizations:\n1. Charts that best represent findings\n2. Use modern charting library (Chart.js, D3, or Python matplotlib)\n3. Include labels, titles, legends\n4. Color scheme appropriate for data type\n5. Interactive elements if applicable",
+      "outputVariable": "visualizationCode",
+      "dependsOn": ["analyze"]
+    },
+    {
+      "id": "insights",
+      "name": "Extract Actionable Insights",
+      "prompt": "From the analysis:\n{{analysisResults}}\n\nExtract actionable insights:\n1. Key findings summary\n2. Business implications\n3. Recommended actions\n4. Areas for further investigation\n5. Confidence levels and caveats",
+      "outputVariable": "insights",
+      "dependsOn": ["analyze"]
+    }
+  ],
+  "output": {
+    "format": "markdown",
+    "sections": ["dataUnderstanding", "analysisResults", "insights", "visualizationCode"]
+  }
+}

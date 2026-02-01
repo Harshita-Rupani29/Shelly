@@ -1,0 +1,137 @@
+# Product Roadmap
+
+## Vision
+
+{{description}}
+
+---
+
+## Current Release
+
+### Version X.Y.Z (Current)
+
+**Theme**: [Release Theme]
+
+**Status**: 🚀 Released | 🔨 In Development | 📋 Planning
+
+**Key Features**:
+
+- [x] Feature 1 - Description
+- [x] Feature 2 - Description
+- [ ] Feature 3 - Description
+
+---
+
+## Upcoming Releases
+
+### Version X.Y+1.0 (Next)
+
+**Target**: Q# YYYY
+
+**Theme**: [Release Theme]
+
+**Planned Features**:
+
+| Feature | Priority | Status | Owner |
+|---------|----------|--------|-------|
+| Feature A | High | Not Started | TBD |
+| Feature B | Medium | Not Started | TBD |
+| Feature C | Low | Not Started | TBD |
+
+---
+
+### Version X.Y+2.0 (Future)
+
+**Target**: Q# YYYY
+
+**Theme**: [Release Theme]
+
+**Planned Features**:
+
+- Feature exploration 1
+- Feature exploration 2
+
+---
+
+## Long-term Vision
+
+### Year 1 Goals
+
+- Goal 1
+- Goal 2
+
+### Year 2+ Goals
+
+- Future direction 1
+- Future direction 2
+
+---
+
+## Feature Backlog
+
+### High Priority
+
+- [ ] Feature description
+- [ ] Feature description
+
+### Medium Priority
+
+- [ ] Feature description
+- [ ] Feature description
+
+### Low Priority / Nice to Have
+
+- [ ] Feature description
+- [ ] Feature description
+
+---
+
+## Technical Debt
+
+### Must Address
+
+- [ ] Debt item 1
+- [ ] Debt item 2
+
+### Should Address
+
+- [ ] Debt item 3
+
+---
+
+## Completed Milestones
+
+### v1.0.0 - Initial Release
+
+**Released**: YYYY-MM-DD
+
+**Key Achievements**:
+
+- Achievement 1
+- Achievement 2
+
+---
+
+## Decision History
+
+| Date | Decision | Rationale |
+|------|----------|-----------|
+| YYYY-MM-DD | Decision | Why we made this decision |
+
+---
+
+## Metrics & Success Criteria
+
+### Key Metrics
+
+- Metric 1: Target value
+- Metric 2: Target value
+
+### Success Criteria
+
+- [ ] Criterion 1
+- [ ] Criterion 2
+
+---
+
+_Last Updated: {{date}}_
