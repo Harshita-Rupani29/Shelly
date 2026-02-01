@@ -1,0 +1,48 @@
+# CODEOWNERS file for {{projectName}}
+# Each line is a file pattern followed by one or more owners.
+# These owners will be the default assignees for pull requests.
+
+# Global owners
+* @{{owner}}/maintainers
+
+# Core library and SDK
+/src/lib/ @{{owner}}/core
+/src/lib/core/ @{{owner}}/core
+
+# Services
+/src/services/ @{{owner}}/core
+/src/shelly/services/ @{{owner}}/core
+
+# CLI
+/src/cli/ @{{owner}}/cli
+/src/shelly/cli/ @{{owner}}/cli
+/src/shelly/commands/ @{{owner}}/cli
+
+# Configuration and build
+/package.json @{{owner}}/maintainers
+/tsconfig*.json @{{owner}}/maintainers
+/.changeset/ @{{owner}}/maintainers
+
+# GitHub workflows and settings
+/.github/ @{{owner}}/maintainers
+/.github/workflows/ @{{owner}}/devops
+
+# Documentation
+/docs/ @{{owner}}/docs
+/README.md @{{owner}}/docs
+/CHANGELOG.md @{{owner}}/docs
+/CONTRIBUTING.md @{{owner}}/docs
+
+# Tests
+/test/ @{{owner}}/testing
+/tests/ @{{owner}}/testing
+
+# Examples and demos
+/examples/ @{{owner}}/docs
+
+# Scripts and tools
+/scripts/ @{{owner}}/devops
+/tools/ @{{owner}}/devops
+
+# Memory bank and AI context
+/memory-bank/ @{{owner}}/docs

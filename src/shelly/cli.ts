@@ -47,6 +47,10 @@ async function setupCLI() {
     .option('-u, --update', 'only add missing files, preserve existing ones')
     .option('-m, --move', 'move misplaced files to their correct directories')
     .option(
+      '--github-action',
+      'include action.yml for GitHub Action projects'
+    )
+    .option(
       '-d, --directory <path>',
       'target directory (defaults to current directory)'
     )
@@ -83,6 +87,7 @@ async function setupCLI() {
           force: options.force,
           update: options.update,
           move: options.move,
+          githubAction: options.githubAction,
           cwd: targetDirectory,
         });
 

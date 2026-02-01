@@ -1,0 +1,181 @@
+name: Documentation PR Validation
+
+on:
+  pull_request:
+    branches: [main, release]
+    paths:
+      - "docs-site/**"
+      - "docs/**"
+      - ".github/workflows/docs-pr-validation.yml"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  NODE_VERSION: "20"
+
+jobs:
+  validate:
+    name: Validate Documentation
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: docs-site
+    outputs:
+      typecheck_status: ${{ steps.typecheck.outcome }}
+      build_status: ${{ steps.build.outcome }}
+      links_status: ${{ steps.links.outcome }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: docs-site/package-lock.json
+
+      - name: Restore cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            docs-site/.docusaurus
+            docs-site/node_modules/.cache
+          key: ${{ runner.os }}-docs-${{ hashFiles('docs-site/package-lock.json') }}-${{ hashFiles('docs-site/**/*.{ts,tsx,mdx,css}') }}
+          restore-keys: |
+            ${{ runner.os }}-docs-${{ hashFiles('docs-site/package-lock.json') }}-
+            ${{ runner.os }}-docs-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync docs content
+        run: npm run sync-docs || echo "No sync-docs script, skipping..."
+
+      - name: TypeScript check
+        id: typecheck
+        run: npm run typecheck || echo "No typecheck script, skipping..."
+
+      - name: Build documentation
+        id: build
+        run: npm run build
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
+
+      - name: Validate links
+        id: links
+        continue-on-error: true
+        run: |
+          if grep -q '"validate:links"' package.json; then
+            npm run validate:links
+          else
+            echo "No validate:links script found, skipping..."
+          fi
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-build-${{ github.sha }}
+          path: docs-site/build
+          retention-days: 7
+
+  comment:
+    name: Post Validation Results
+    runs-on: ubuntu-latest
+    needs: validate
+    if: always()
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: Check Comment Permissions
+        id: check-permissions
+        run: |
+          if [ "${{ github.event.pull_request.head.repo.id }}" != "${{ github.event.repository.id }}" ]; then
+            echo "External contributor PR - comment posting skipped"
+            echo "can_comment=false" >> $GITHUB_OUTPUT
+          else
+            echo "Internal PR - comment posting enabled"
+            echo "can_comment=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Post PR comment with results
+        if: steps.check-permissions.outputs.can_comment == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const typecheck = '${{ needs.validate.outputs.typecheck_status }}';
+            const build = '${{ needs.validate.outputs.build_status }}';
+            const links = '${{ needs.validate.outputs.links_status }}';
+
+            const getStatusEmoji = (status) => {
+              if (status === 'success') return ':white_check_mark:';
+              if (status === 'failure') return ':x:';
+              if (status === 'skipped') return ':fast_forward:';
+              return ':warning:';
+            };
+
+            const getStatusText = (status) => {
+              if (status === 'success') return 'Passed';
+              if (status === 'failure') return 'Failed';
+              if (status === 'skipped') return 'Skipped';
+              return 'Unknown';
+            };
+
+            const allPassed = typecheck === 'success' && build === 'success';
+
+            const overallStatus = allPassed
+              ? ':rocket: **Documentation validation passed!**'
+              : ':warning: **Documentation validation has issues**';
+
+            const body = `## Documentation Validation Results
+
+            ${overallStatus}
+
+            | Check | Status | Result |
+            |-------|--------|--------|
+            | TypeScript Check | ${getStatusEmoji(typecheck)} | ${getStatusText(typecheck)} |
+            | Build | ${getStatusEmoji(build)} | ${getStatusText(build)} |
+            | Link Validation | ${getStatusEmoji(links)} | ${getStatusText(links)} |
+
+            ---
+
+            ${allPassed
+              ? ':package: Build artifact uploaded successfully. Ready for deployment preview.'
+              : ':construction: Please fix the failing checks before merging.'}
+
+            <sub>Commit: \`${{ github.sha }}\` | Workflow: [View logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})</sub>
+            `;
+
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('Documentation Validation Results')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }

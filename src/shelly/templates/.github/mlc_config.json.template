@@ -1,0 +1,39 @@
+{
+  "ignorePatterns": [
+    {
+      "pattern": "^https://github.com/{{owner}}/{{repoName}}/compare"
+    },
+    {
+      "pattern": "^https://github.com/{{owner}}/{{repoName}}/commit"
+    },
+    {
+      "pattern": "^https://github.com/{{owner}}/{{repoName}}/tree"
+    },
+    {
+      "pattern": "^https://github.com/{{owner}}/{{repoName}}/blob"
+    },
+    {
+      "pattern": "^https://github.com/{{owner}}/{{repoName}}/issues"
+    },
+    {
+      "pattern": "^https://github.com/{{owner}}/{{repoName}}/pull"
+    },
+    {
+      "pattern": "^https://localhost"
+    },
+    {
+      "pattern": "^http://localhost"
+    },
+    {
+      "pattern": "^https://127.0.0.1"
+    },
+    {
+      "pattern": "^http://127.0.0.1"
+    }
+  ],
+  "timeout": "20s",
+  "retryOn429": true,
+  "retryCount": 3,
+  "fallbackRetryDelay": "30s",
+  "aliveStatusCodes": [200, 206, 301, 302, 307, 308]
+}

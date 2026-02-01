@@ -1,0 +1,182 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+**{{projectName}}** - {{description}}
+
+- **Package Name**: {{packageName}}
+- **Repository**: {{repoName}}
+
+## Essential Development Commands
+
+### Building
+
+```bash
+npm run build              # Compile/build the project
+npm run clean              # Remove build artifacts
+```
+
+### Testing
+
+```bash
+npm test                   # Run all tests
+npm run test:watch         # Run tests in watch mode
+npm run test:coverage      # Run tests with coverage report
+```
+
+### Code Quality
+
+```bash
+npm run lint               # Run linter (ESLint)
+npm run lint:fix           # Auto-fix linting issues
+npm run format             # Format code with Prettier
+npm run format:check       # Check formatting without changes
+npm run typecheck          # Run TypeScript type checking
+```
+
+### Development
+
+```bash
+npm start                  # Start the application
+npm run dev                # Start in development mode with hot reload
+```
+
+## High-Level Architecture
+
+<!--
+This section should describe the key architectural patterns and design decisions.
+Update this based on your project's specific architecture.
+-->
+
+### Core Concepts
+
+- **Entry Point**: The main application entry point
+- **Services**: Business logic and external integrations
+- **Utils**: Shared utility functions and helpers
+- **Types**: TypeScript type definitions and interfaces
+
+### Key Design Patterns
+
+- Describe the primary patterns used (e.g., dependency injection, repository pattern, etc.)
+- Note any important architectural decisions and their rationale
+
+## Directory Structure
+
+```
+{{projectName}}/
+├── src/                    # Source code
+│   ├── index.ts           # Main entry point
+│   ├── services/          # Service layer (business logic)
+│   ├── utils/             # Utility functions
+│   ├── types/             # TypeScript type definitions
+│   └── tests/             # Test files
+├── dist/                   # Compiled output (generated)
+├── docs/                   # Documentation
+├── scripts/               # Build and utility scripts
+├── .github/               # GitHub workflows and templates
+│   └── workflows/         # CI/CD workflow definitions
+├── package.json           # Package configuration
+├── tsconfig.json          # TypeScript configuration
+├── .eslintrc.*            # ESLint configuration
+├── .prettierrc            # Prettier configuration
+└── README.md              # Project documentation
+```
+
+## Development Workflow
+
+### Getting Started
+
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Build the project: `npm run build`
+4. Run tests: `npm test`
+
+### Making Changes
+
+1. Create a feature branch from `main`
+2. Make your changes following the code style guidelines
+3. Write/update tests for your changes
+4. Ensure all tests pass: `npm test`
+5. Ensure linting passes: `npm run lint`
+6. Submit a pull request
+
+### Commit Convention
+
+This project uses conventional commits for semantic versioning:
+
+- `feat:` - New features (minor version bump)
+- `fix:` - Bug fixes (patch version bump)
+- `docs:` - Documentation changes
+- `chore:` - Maintenance tasks
+- `refactor:` - Code refactoring
+- `test:` - Test additions/changes
+- `BREAKING CHANGE:` - Breaking changes (major version bump)
+
+## Key Files to Know
+
+| File | Purpose |
+|------|---------|
+| `src/index.ts` | Main entry point |
+| `package.json` | Dependencies and scripts |
+| `tsconfig.json` | TypeScript compiler options |
+| `.eslintrc.*` | Linting rules |
+| `.prettierrc` | Code formatting rules |
+| `.github/workflows/` | CI/CD pipeline definitions |
+
+## Important Constraints
+
+### Code Style
+
+- Follow the existing code style and patterns
+- Use TypeScript for all new code
+- Ensure proper type annotations (avoid `any` when possible)
+- Write meaningful variable and function names
+- Add JSDoc comments for public APIs
+
+### Testing Requirements
+
+- Write tests for all new features and bug fixes
+- Maintain or improve code coverage
+- Tests should be deterministic and not rely on external state
+
+### Dependencies
+
+- Minimize adding new dependencies
+- Prefer well-maintained packages with good security records
+- Document why new dependencies are needed in PR descriptions
+
+### Performance Considerations
+
+- Be mindful of bundle size impact
+- Avoid synchronous operations that could block
+- Consider memory usage for large data processing
+
+### Security Guidelines
+
+- Never commit secrets, API keys, or credentials
+- Use environment variables for sensitive configuration
+- Validate and sanitize all user inputs
+- Keep dependencies updated for security patches
+
+## Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `NODE_ENV` | Environment (development/production/test) | No |
+| `DEBUG` | Enable debug logging | No |
+
+## Common Gotchas
+
+1. **Build Before Test**: Always run `npm run build` before testing if you've made TypeScript changes
+2. **Import Extensions**: If using ESM, remember to use `.js` extensions in imports even for TypeScript files
+3. **Node Version**: Ensure you're using a compatible Node.js version (check `engines` in package.json)
+4. **Environment Setup**: Some features may require environment variables to be configured
+
+## Getting Help
+
+- Check the README.md for general documentation
+- Review existing code for patterns and conventions
+- Look at test files for usage examples
+- Check issue tracker for known problems and solutions

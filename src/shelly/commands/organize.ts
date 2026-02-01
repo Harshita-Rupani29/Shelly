@@ -1,4 +1,5 @@
 import fs from 'fs/promises';
+import { existsSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { AIContentGenerator } from '../utils/aiContentGenerator.js';
@@ -10,6 +11,7 @@ interface OrganizeOptions {
   update?: boolean;
   move?: boolean;
   cwd?: string;
+  githubAction?: boolean;
 }
 
 interface ClassificationRule {
@@ -44,6 +46,7 @@ export class OrganizeCommand {
   force: boolean;
   update: boolean;
   move: boolean;
+  githubAction: boolean;
   preserveDocs: boolean;
   preserveTests: boolean;
   cwd: string;
@@ -54,6 +57,7 @@ export class OrganizeCommand {
     this.force = options.force || false;
     this.update = options.update || false;
     this.move = options.move || false;
+    this.githubAction = options.githubAction || false;
 
     // Initialize preservation flags
     this.preserveDocs = false;
@@ -402,7 +406,7 @@ export class OrganizeCommand {
         ['docs.yml', '.github/workflows'],
         ['copilot-review.yml', '.github/workflows'],
         ['dependency-review.yml', '.github/workflows'],
-        ['singlecommitenforcement.yml', '.github/workflows'],
+        ['single-commit-enforcement.yml', '.github/workflows'],
 
         // Issue and PR templates
         ['PULL_REQUEST_TEMPLATE.md', '.github'],
@@ -630,12 +634,22 @@ export class OrganizeCommand {
       '.github/workflows',
       '.changeset',
       '.husky',
+      '.ai/workflows',
+      '.claude/commands',
       'config',
       'src',
+      'src/commands',
+      'src/providers',
+      'src/services',
       'scripts',
       'docs',
+      'tests',
       'examples',
       'tools',
+      'tools/automation',
+      'tools/testing',
+      'tools/development',
+      'tools/content',
       'todos',
       `${repoAnalysis.repoName}-demo`,
       'test',
@@ -800,7 +814,10 @@ export class OrganizeCommand {
   /**
    * Merge dependencies with intelligent version conflict resolution
    */
-  mergeDependenciesWithVersionResolution(existing, enhanced) {
+  mergeDependenciesWithVersionResolution(
+    existing: Record<string, string>,
+    enhanced: Record<string, string>
+  ): Record<string, string> {
     const merged = { ...existing };
 
     for (const [pkg, enhancedVersion] of Object.entries(enhanced)) {
@@ -975,7 +992,17 @@ export class OrganizeCommand {
   /**
    * Resolve version conflicts by choosing the higher version
    */
-  resolveVersionConflict(version1, version2) {
+  resolveVersionConflict(version1: string, version2: string): string {
+    // Check for special protocol/reference types first
+    const specialProtocols = ['workspace:', 'file:', 'git+', 'link:', 'portal:'];
+    const isSpecial1 = specialProtocols.some(proto => version1.startsWith(proto));
+    const isSpecial2 = specialProtocols.some(proto => version2.startsWith(proto));
+
+    // If either is a special protocol, preserve the existing one
+    if (isSpecial1 || isSpecial2) {
+      return version1;
+    }
+
     // Simple version comparison - prioritize newer versions
     const cleanVersion1 = version1.replace(/[^0-9.]/g, '');
     const cleanVersion2 = version2.replace(/[^0-9.]/g, '');
@@ -1078,6 +1105,31 @@ export class OrganizeCommand {
           this.loadTemplate('.gitleaksrc.json.template', repoAnalysis),
       },
       {
+        name: '.gitleaksignore',
+        generator: () =>
+          this.loadTemplate('.gitleaksignore.template', repoAnalysis),
+      },
+      {
+        name: 'CLAUDE.md',
+        generator: () =>
+          this.loadTemplate('CLAUDE.md.template', repoAnalysis),
+      },
+      {
+        name: 'SECURITY.md',
+        generator: () =>
+          this.loadTemplate('SECURITY.md.template', repoAnalysis),
+      },
+      {
+        name: '.markdownlint.json',
+        generator: () =>
+          this.loadTemplateRaw('.markdownlint.json.template'),
+      },
+      {
+        name: 'typedoc.json',
+        generator: () =>
+          this.loadTemplate('typedoc.json.template', repoAnalysis),
+      },
+      {
         name: '.mcp-servers.example.json',
         generator: () =>
           this.loadTemplate('.mcp-servers.example.json.template', repoAnalysis),
@@ -1122,7 +1174,86 @@ export class OrganizeCommand {
         generator: () =>
           this.loadTemplate('pre-commit.sh.template', repoAnalysis),
       },
+      {
+        name: 'scripts/build-validations.cjs',
+        generator: () =>
+          this.loadTemplate('scripts/build-validations.cjs.template', repoAnalysis),
+      },
+      {
+        name: 'scripts/commit-validation.cjs',
+        generator: () =>
+          this.loadTemplate('scripts/commit-validation.cjs.template', repoAnalysis),
+      },
+      {
+        name: 'scripts/env-validation.cjs',
+        generator: () =>
+          this.loadTemplate('scripts/env-validation.cjs.template', repoAnalysis),
+      },
+      {
+        name: 'scripts/security-check.cjs',
+        generator: () =>
+          this.loadTemplate('scripts/security-check.cjs.template', repoAnalysis),
+      },
+      {
+        name: 'scripts/smart-test.cjs',
+        generator: () =>
+          this.loadTemplate('scripts/smart-test.cjs.template', repoAnalysis),
+      },
+      {
+        name: 'scripts/organize-project.cjs',
+        generator: () =>
+          this.loadTemplate('scripts/organize-project.cjs.template', repoAnalysis),
+      },
+      {
+        name: 'scripts/mcp-test.cjs',
+        generator: () =>
+          this.loadTemplate('scripts/mcp-test.cjs.template', repoAnalysis),
+      },
+      {
+        name: 'scripts/postinstall.cjs',
+        generator: () =>
+          this.loadTemplate('scripts/postinstall.cjs.template', repoAnalysis),
+      },
+      {
+        name: 'scripts/quality-metrics.cjs',
+        generator: () =>
+          this.loadTemplate('scripts/quality-metrics.cjs.template', repoAnalysis),
+      },
+      {
+        name: 'scripts/format-staged.cjs',
+        generator: () =>
+          this.loadTemplate('scripts/format-staged.cjs.template', repoAnalysis),
+      },
+      {
+        name: 'scripts/format-changelog.cjs',
+        generator: () =>
+          this.loadTemplate('scripts/format-changelog.cjs.template', repoAnalysis),
+      },
+      {
+        name: 'scripts/semantic-release-format-plugin.cjs',
+        generator: () =>
+          this.loadTemplate('scripts/semantic-release-format-plugin.cjs.template', repoAnalysis),
+      },
+      {
+        name: '.npmrc',
+        generator: () =>
+          this.loadTemplate('.npmrc.template', repoAnalysis),
+      },
+      {
+        name: '.mcp-servers.json',
+        generator: () =>
+          this.loadTemplate('.mcp-servers.json.template', repoAnalysis),
+      },
     ];
+
+    // Add action.yml only if --github-action flag is specified
+    if (this.githubAction) {
+      files.push({
+        name: 'action.yml',
+        generator: () =>
+          this.loadTemplate('action.yml.template', repoAnalysis),
+      });
+    }
 
     for (const file of files) {
       await this.createOrUpdateFile(file.name, file.generator, repoAnalysis);
@@ -1148,7 +1279,7 @@ export class OrganizeCommand {
     const templates = [
       // Issue and PR templates
       {
-        source: '.github/ISSUE_TEMPLATE/bug_report.yml',
+        source: '.github/ISSUE_TEMPLATE/bug_report.yml.template',
         target: '.github/ISSUE_TEMPLATE/bug_report.yml',
       },
       {
@@ -1162,6 +1293,14 @@ export class OrganizeCommand {
       {
         source: '.github/ISSUE_TEMPLATE/feature_request.yml.template',
         target: '.github/ISSUE_TEMPLATE/feature_request.yml',
+      },
+      {
+        source: '.github/ISSUE_TEMPLATE/config.yml.template',
+        target: '.github/ISSUE_TEMPLATE/config.yml',
+      },
+      {
+        source: '.github/mlc_config.json.template',
+        target: '.github/mlc_config.json',
       },
       {
         source: '.github/PULL_REQUEST_TEMPLATE.md',
@@ -1189,8 +1328,8 @@ export class OrganizeCommand {
         target: '.github/workflows/release.yml',
       },
       {
-        source: '.github/workflows/singlecommitenforcement.yml.template',
-        target: '.github/workflows/singlecommitenforcement.yml',
+        source: '.github/workflows/single-commit-enforcement.yml.template',
+        target: '.github/workflows/single-commit-enforcement.yml',
       },
       // GitHub configuration files
       {
@@ -1213,6 +1352,32 @@ export class OrganizeCommand {
         source: '.github/settings.yml.template',
         target: '.github/settings.yml',
       },
+      // New workflow templates
+      {
+        source: '.github/workflows/update-major-tag.yml.template',
+        target: '.github/workflows/update-major-tag.yml',
+      },
+      {
+        source: '.github/workflows/docs-deploy.yml.template',
+        target: '.github/workflows/docs-deploy.yml',
+      },
+      {
+        source: '.github/workflows/docs-pr-validation.yml.template',
+        target: '.github/workflows/docs-pr-validation.yml',
+      },
+      // New GitHub templates
+      {
+        source: '.github/CODEOWNERS.template',
+        target: '.github/CODEOWNERS',
+      },
+      {
+        source: '.github/PULL_REQUEST_TEMPLATE.md.template',
+        target: '.github/PULL_REQUEST_TEMPLATE.md',
+      },
+      {
+        source: '.github/ISSUE_TEMPLATE/documentation.md.template',
+        target: '.github/ISSUE_TEMPLATE/documentation.md',
+      },
       // Documentation files
       {
         source: 'docs/API.md.template',
@@ -1228,18 +1393,6 @@ export class OrganizeCommand {
       const content = await this.loadTemplate(template.source, repoAnalysis);
       await this.writeFileIfNeeded(template.target, content);
     }
-
-    // Create CODEOWNERS file
-    const codeownersContent = `# Global owners
-* @juspay/${repoAnalysis.repoName}-maintainers
-
-# Documentation
-*.md @juspay/docs-team
-
-# GitHub workflows
-/.github/ @juspay/devops-team
-`;
-    await this.writeFileIfNeeded('.github/CODEOWNERS', codeownersContent);
 
     // Create directory template files
     await this.createDirectoryTemplateFiles(repoAnalysis);
@@ -1272,6 +1425,10 @@ export class OrganizeCommand {
         source: '.husky/commit-msg.template',
         target: '.husky/commit-msg',
       },
+      {
+        source: '.husky/pre-push.template',
+        target: '.husky/pre-push',
+      },
       // Config templates
       {
         source: 'config/README.md.template',
@@ -1300,6 +1457,88 @@ export class OrganizeCommand {
         source: 'todos/ROADMAP.md.template',
         target: 'todos/ROADMAP.md',
       },
+      // Tests templates
+      {
+        source: 'tests/setup.ts.template',
+        target: 'tests/setup.ts',
+      },
+      // Source boilerplate templates
+      {
+        source: 'src/commands/command.ts.template',
+        target: 'src/commands/command.example.ts',
+      },
+      {
+        source: 'src/providers/provider.ts.template',
+        target: 'src/providers/provider.example.ts',
+      },
+      {
+        source: 'src/services/service.ts.template',
+        target: 'src/services/service.example.ts',
+      },
+      // AI Workflow templates
+      {
+        source: 'workflows/README.md.template',
+        target: '.ai/workflows/README.md',
+      },
+      {
+        source: 'workflows/code-review.json.template',
+        target: '.ai/workflows/code-review.json',
+      },
+      {
+        source: 'workflows/content-creation.json.template',
+        target: '.ai/workflows/content-creation.json',
+      },
+      {
+        source: 'workflows/data-analysis.json.template',
+        target: '.ai/workflows/data-analysis.json',
+      },
+      {
+        source: 'workflows/documentation.json.template',
+        target: '.ai/workflows/documentation.json',
+      },
+      // Claude Code commands
+      {
+        source: '.claude/commands/commit.md.template',
+        target: '.claude/commands/commit.md',
+      },
+      {
+        source: '.claude/commands/refactor-code.md.template',
+        target: '.claude/commands/refactor-code.md',
+      },
+      {
+        source: '.claude/commands/ultra-think.md.template',
+        target: '.claude/commands/ultra-think.md',
+      },
+      {
+        source: '.claude/commands/update-docs.md.template',
+        target: '.claude/commands/update-docs.md',
+      },
+      {
+        source: '.claude/commands/create-architecture-documentation.md.template',
+        target: '.claude/commands/create-architecture-documentation.md',
+      },
+      // Claude settings
+      {
+        source: '.claude/settings.local.json.template',
+        target: '.claude/settings.local.json',
+      },
+      // Tools directory READMEs
+      {
+        source: 'tools/automation/README.md.template',
+        target: 'tools/automation/README.md',
+      },
+      {
+        source: 'tools/testing/README.md.template',
+        target: 'tools/testing/README.md',
+      },
+      {
+        source: 'tools/development/README.md.template',
+        target: 'tools/development/README.md',
+      },
+      {
+        source: 'tools/content/README.md.template',
+        target: 'tools/content/README.md',
+      },
     ];
 
     for (const template of directoryTemplates) {
@@ -1312,6 +1551,7 @@ export class OrganizeCommand {
       const huskyHooks = [
         path.join(this.cwd, '.husky/pre-commit'),
         path.join(this.cwd, '.husky/commit-msg'),
+        path.join(this.cwd, '.husky/pre-push'),
       ];
       for (const hook of huskyHooks) {
         if (await this.fileExists(hook)) {
@@ -1464,14 +1704,19 @@ export class OrganizeCommand {
       }
     }
 
+    // Convert project name to kebab-case for binName
+    const projectName = repoAnalysis.name || repoAnalysis.repoName;
+    const binName = projectName.replace('@juspay/', '').replace(/[^a-zA-Z0-9-]/g, '-').toLowerCase();
+
     const replacements = {
-      '{{projectName}}': repoAnalysis.name || repoAnalysis.repoName,
+      '{{projectName}}': projectName,
       '{{packageName}}':
         repoAnalysis.name || `@juspay/${repoAnalysis.repoName}`,
       '{{repoName}}': repoAnalysis.repoName,
       '{{description}}': repoAnalysis.description || 'A JavaScript project',
       '{{license}}': repoAnalysis.license || 'ISC',
       '{{repositoryUrl}}': `https://github.com/juspay/${repoAnalysis.repoName}`,
+      '{{owner}}': 'juspay',
       '{{maintainerUsername}}': 'juspay-maintainers',
       '{{contactEmail}}': 'opensource@juspay.in',
       '{{moduleName}}': this.toCamelCase(repoAnalysis.repoName),
@@ -1479,7 +1724,14 @@ export class OrganizeCommand {
       '{{returnType}}': 'Promise<any>',
       '{{CURRENT_DATE}}': new Date().toISOString(),
       '{{currentYear}}': new Date().getFullYear().toString(),
+      '{{date}}': new Date().toISOString().split('T')[0],
       '{{author}}': authorName,
+      // New placeholders for comprehensive template support
+      '{{projectRoot}}': path.basename(this.cwd),
+      '{{version}}': repoAnalysis.version || '0.0.0-development',
+      '{{repoType}}': 'public',
+      '{{binName}}': binName,
+      '{{packageManager}}': this.detectPackageManager(),
     };
 
     let result = content;
@@ -1645,6 +1897,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    */
   toCamelCase(str) {
     return str.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+  }
+
+  /**
+   * Detect package manager based on lock files
+   */
+  detectPackageManager(): string {
+    if (existsSync(path.join(this.cwd, 'pnpm-lock.yaml'))) return 'pnpm';
+    if (existsSync(path.join(this.cwd, 'yarn.lock'))) return 'yarn';
+    if (existsSync(path.join(this.cwd, 'bun.lockb'))) return 'bun';
+    return 'npm';
   }
 
   /**

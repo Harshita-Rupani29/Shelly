@@ -11,6 +11,7 @@ permissions:
 jobs:
   copilot-review:
     runs-on: ubuntu-latest
+    name: 🤖 AI Code Review
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -20,40 +21,95 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Copilot Code Review
-        uses: github/copilot-review-action@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          review-comment-lgtm: false
-          path-filters: |
-            **/*.js
-            **/*.ts
-            **/*.jsx
-            **/*.tsx
-            **/*.py
-            **/*.java
-            **/*.go
-            **/*.rs
-          exclude-paths: |
-            node_modules/**
-            dist/**
-            build/**
-            .next/**
+      - name: Run linting
+        run: npm run lint
+        continue-on-error: true
 
-      - name: Comment PR
+      - name: Run type checking
+        if: hashFiles('tsconfig.json') != ''
+        run: npx tsc --noEmit
+        continue-on-error: true
+
+      - name: Generate PR Summary
         uses: actions/github-script@v7
-        if: github.event_name == 'pull_request'
         with:
           script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
+            const { data: files } = await github.rest.pulls.listFiles({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '🤖 Copilot review completed! Check the Files Changed tab for detailed feedback.'
-            })
+              pull_number: context.issue.number
+            });
+
+            const stats = {
+              added: files.filter(f => f.status === 'added').length,
+              modified: files.filter(f => f.status === 'modified').length,
+              removed: files.filter(f => f.status === 'removed').length,
+              total: files.length,
+              additions: files.reduce((acc, f) => acc + f.additions, 0),
+              deletions: files.reduce((acc, f) => acc + f.deletions, 0)
+            };
+
+            const fileTypes = files.reduce((acc, f) => {
+              const parts = f.filename.split('.');
+              const ext = parts.length > 1 ? parts.pop() : 'other';
+              acc[ext] = (acc[ext] || 0) + 1;
+              return acc;
+            }, {});
+
+            const topTypes = Object.entries(fileTypes)
+              .sort((a, b) => b[1] - a[1])
+              .slice(0, 5)
+              .map(([ext, count]) => `\`.${ext}\` (${count})`)
+              .join(', ');
+
+            const body = `## 🤖 PR Analysis Summary
+
+### 📊 Change Statistics
+| Metric | Count |
+|--------|-------|
+| Files Changed | ${stats.total} |
+| Files Added | ${stats.added} |
+| Files Modified | ${stats.modified} |
+| Files Removed | ${stats.removed} |
+| Lines Added | +${stats.additions} |
+| Lines Removed | -${stats.deletions} |
+
+### 📁 File Types Changed
+${topTypes || 'No files changed'}
+
+---
+*🤖 Automated analysis by {{repoName}}*`;
+
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
+
+            const existingComment = comments.find(c =>
+              c.user?.login === 'github-actions[bot]' &&
+              c.body.includes('PR Analysis Summary')
+            );
+
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body
+              });
+            }

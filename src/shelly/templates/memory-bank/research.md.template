@@ -1,0 +1,76 @@
+# Research Log
+
+## Purpose
+
+This document tracks research findings, investigations, and explorations related to {{projectName}}.
+
+---
+
+## Current Research Topics
+
+### Topic: [Research Area Name]
+
+**Status**: 🔬 In Progress | ✅ Complete | ⏸️ Paused
+
+**Objective**: What are we trying to learn or solve?
+
+**Key Questions**:
+
+1. Question 1
+2. Question 2
+3. Question 3
+
+**Findings**:
+
+- Finding 1
+- Finding 2
+
+**Sources**:
+
+- [Source 1](link)
+- [Source 2](link)
+
+**Conclusion**: Summary of findings and recommendations
+
+---
+
+## Completed Research
+
+### [Date] - Topic Name
+
+**Summary**: Brief description of research completed
+**Outcome**: What was decided or implemented based on this research
+
+---
+
+## Research Backlog
+
+- [ ] Topic to research later
+- [ ] Another topic to investigate
+- [ ] Technical deep dive needed
+
+---
+
+## Decision Log
+
+| Date | Decision | Context | Alternatives Considered |
+|------|----------|---------|------------------------|
+| YYYY-MM-DD | Decision made | Why this decision was needed | Other options we considered |
+
+---
+
+## Lessons Learned
+
+### Technical Insights
+
+- Insight 1
+- Insight 2
+
+### Process Improvements
+
+- Improvement 1
+- Improvement 2
+
+---
+
+_Last Updated: {{date}}_

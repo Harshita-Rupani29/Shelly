@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Discussions
+    url: {{repositoryUrl}}/discussions
+    about: Ask questions and discuss ideas
+  - name: 📚 Documentation
+    url: {{repositoryUrl}}#readme
+    about: Check out the documentation
+  - name: 🔒 Security Vulnerability
+    url: {{repositoryUrl}}/security/advisories/new
+    about: Report a security vulnerability privately

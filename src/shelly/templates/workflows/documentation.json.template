@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "documentation",
+  "description": "AI-assisted documentation generation workflow for {{projectName}}",
+  "version": "1.0.0",
+  "variables": {
+    "sourceCode": {
+      "type": "string",
+      "required": true,
+      "description": "Path to source code or code content"
+    },
+    "docType": {
+      "type": "string",
+      "required": false,
+      "default": "api",
+      "enum": ["api", "readme", "tutorial", "architecture", "changelog"],
+      "description": "Type of documentation to generate"
+    },
+    "language": {
+      "type": "string",
+      "required": false,
+      "default": "typescript",
+      "description": "Programming language of the source"
+    }
+  },
+  "steps": [
+    {
+      "id": "parse",
+      "name": "Parse Code Structure",
+      "prompt": "Analyze the following {{language}} code:\n```{{language}}\n{{sourceCode}}\n```\n\nExtract:\n1. Module/file purpose\n2. Exported functions/classes\n3. Function signatures and parameters\n4. Return types\n5. Dependencies and imports\n6. Code comments and annotations",
+      "outputVariable": "codeStructure"
+    },
+    {
+      "id": "document",
+      "name": "Generate {{docType}} Documentation",
+      "prompt": "Based on code structure:\n{{codeStructure}}\n\nGenerate {{docType}} documentation including:\n1. Overview and purpose\n2. Installation/setup (if applicable)\n3. API reference with examples\n4. Parameter descriptions\n5. Return value documentation\n6. Error handling\n7. Usage examples\n\nUse proper markdown formatting with code blocks.",
+      "outputVariable": "documentation",
+      "dependsOn": ["parse"]
+    },
+    {
+      "id": "examples",
+      "name": "Generate Usage Examples",
+      "prompt": "Based on the API:\n{{codeStructure}}\n\nCreate practical usage examples:\n1. Basic usage example\n2. Advanced configuration example\n3. Error handling example\n4. Integration example\n5. Common patterns and idioms\n\nEnsure examples are copy-paste ready and tested.",
+      "outputVariable": "usageExamples",
+      "dependsOn": ["parse"]
+    },
+    {
+      "id": "finalize",
+      "name": "Finalize Documentation",
+      "prompt": "Combine and polish:\n\nDocumentation:\n{{documentation}}\n\nExamples:\n{{usageExamples}}\n\nCreate final documentation with:\n1. Table of contents\n2. Cross-references\n3. Consistent formatting\n4. Navigation links\n5. Version and update date",
+      "outputVariable": "finalDocumentation",
+      "dependsOn": ["document", "examples"]
+    }
+  ],
+  "output": {
+    "format": "markdown",
+    "sections": ["finalDocumentation"]
+  }
+}
