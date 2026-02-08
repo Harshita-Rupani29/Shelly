@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "content-creation",
+  "description": "AI-assisted content creation workflow for @juspay/shelly",
+  "version": "1.0.0",
+  "variables": {
+    "topic": {
+      "type": "string",
+      "required": true,
+      "description": "The main topic or subject to write about"
+    },
+    "audience": {
+      "type": "string",
+      "required": false,
+      "default": "developers",
+      "description": "Target audience for the content"
+    },
+    "length": {
+      "type": "string",
+      "required": false,
+      "default": "medium",
+      "enum": ["short", "medium", "long", "comprehensive"],
+      "description": "Desired content length"
+    },
+    "format": {
+      "type": "string",
+      "required": false,
+      "default": "article",
+      "enum": ["article", "tutorial", "documentation", "blog-post", "readme"],
+      "description": "Content format/type"
+    }
+  },
+  "steps": [
+    {
+      "id": "research",
+      "name": "Research Topic",
+      "prompt": "Research the topic '{{topic}}' for {{audience}} audience.\n\nGather and summarize:\n1. Key concepts and definitions\n2. Current best practices\n3. Common challenges and solutions\n4. Related topics and prerequisites\n5. Code examples or practical applications (if applicable)\n\nFormat as structured notes.",
+      "outputVariable": "researchNotes"
+    },
+    {
+      "id": "outline",
+      "name": "Create Structured Outline",
+      "prompt": "Based on the research notes:\n{{researchNotes}}\n\nCreate a detailed outline for a {{length}} {{format}} about '{{topic}}'.\n\nInclude:\n1. Introduction with hook\n2. Main sections with subsections\n3. Key points for each section\n4. Code examples to include\n5. Conclusion with call-to-action\n\nConsider the {{audience}} audience's technical level.",
+      "outputVariable": "contentOutline",
+      "dependsOn": ["research"]
+    },
+    {
+      "id": "writing",
+      "name": "Write Full Content",
+      "prompt": "Using this outline:\n{{contentOutline}}\n\nAnd research:\n{{researchNotes}}\n\nWrite the complete {{format}} about '{{topic}}' for {{audience}}.\n\nRequirements:\n- Clear, engaging writing style\n- Practical examples and code snippets\n- Proper formatting (headers, lists, code blocks)\n- SEO-friendly structure\n- Actionable takeaways",
+      "outputVariable": "draftContent",
+      "dependsOn": ["outline", "research"]
+    },
+    {
+      "id": "review",
+      "name": "Review and Improve",
+      "prompt": "Review the following content:\n{{draftContent}}\n\nProvide:\n1. Grammar and style corrections\n2. Technical accuracy verification\n3. Clarity improvements\n4. Missing information that should be added\n5. Final polished version\n\nEnsure it's appropriate for {{audience}} readers.",
+      "outputVariable": "finalContent",
+      "dependsOn": ["writing"]
+    }
+  ],
+  "output": {
+    "format": "markdown",
+    "sections": ["finalContent"]
+  }
+}

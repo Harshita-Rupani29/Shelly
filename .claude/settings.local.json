@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C shelly-V2 worktree list:*)",
+      "Bash(du:*)",
+      "Bash(git -C shelly-V2 log --oneline --all)",
+      "Bash(git status --short)",
+      "Bash(xargs ls:*)",
+      "Bash(ls:*)",
+      "Bash(for:*)"
+    ]
+  }
+}

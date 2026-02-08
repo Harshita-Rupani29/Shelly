@@ -1,0 +1,80 @@
+# Gitleaks Ignore File for @juspay/shelly
+# ==========================================
+#
+# This file tells gitleaks to ignore specific findings that have been
+# reviewed and determined to be false positives or intentional test data.
+#
+# Format: <commit-hash>:<file-path>:<rule-id>:<line-number>
+# Or just: <commit-hash>:<file-path>:<rule-id>
+# Or fingerprint: <fingerprint-from-gitleaks-report>
+#
+# IMPORTANT: Only add entries here after manual review confirms they are
+# not actual secrets. Document why each entry is safe to ignore.
+
+# ============================================================================
+# Test Fixtures - Fake credentials used in unit/integration tests
+# ============================================================================
+
+# Example: Test file with mock API keys for testing authentication flows
+# abc123def456:tests/fixtures/mock-credentials.json:generic-api-key
+
+# Example: Integration test with fake database URL
+# abc123def456:tests/integration/database.test.ts:database-connection-url
+
+# ============================================================================
+# Documentation - Example keys shown in README and docs
+# ============================================================================
+
+# Example: README showing how to configure API keys
+# abc123def456:README.md:generic-api-key:45
+
+# Example: Documentation with example configuration
+# abc123def456:docs/configuration.md:project-api-key
+
+# Example: API documentation with sample bearer tokens
+# abc123def456:docs/api-reference.md:custom-bearer-token
+
+# ============================================================================
+# Configuration Templates - Placeholder values in templates
+# ============================================================================
+
+# Example: Environment template file with placeholder values
+# abc123def456:.env.example:generic-secret
+
+# Example: Docker compose template with placeholder credentials
+# abc123def456:docker-compose.example.yml:database-connection-url
+
+# ============================================================================
+# Development Fixtures - Local development mock data
+# ============================================================================
+
+# Example: Seed data for local development
+# abc123def456:scripts/seed-data.ts:generic-secret
+
+# Example: Mock server responses
+# abc123def456:mocks/api-responses.json:jwt-token
+
+# ============================================================================
+# Third-party / Vendored Code - Not our secrets
+# ============================================================================
+
+# Example: Vendored library with its own test fixtures
+# abc123def456:vendor/some-lib/test/fixtures.js:private-key-block
+
+# ============================================================================
+# Historical - Old commits that have been remediated
+# ============================================================================
+
+# Add entries here for secrets that were accidentally committed but have
+# since been rotated/invalidated. Include the date reviewed and by whom.
+
+# Example: API key rotated on 2024-01-15, reviewed by @username
+# old-commit-hash:src/config.ts:generic-api-key
+
+# ============================================================================
+# Project-specific Ignores for shelly
+# ============================================================================
+
+# Add project-specific entries below this line
+# Remember to document why each entry is safe to ignore
+
