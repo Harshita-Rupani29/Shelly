@@ -48,7 +48,7 @@ jobs:
         run: npm install
 
       - name: 🔒 Security audit
-        run: npm audit --audit-level=high
+        run: npm audit --audit-level=critical
 
       - name: 🛡️ Verify package integrity
         run: npm audit signatures

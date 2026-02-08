@@ -6,10 +6,10 @@ site_url: https://juspay.github.io/shelly/
 # Repository
 repo_name: juspay/shelly
 repo_url: https://github.com/juspay/shelly
-edit_uri: edit/main/docs/
+edit_uri: edit/release/docs/
 
 # Copyright
-copyright: 'Copyright &copy; 2023 - 2025 Juspay Technologies Pvt Ltd'
+copyright: 'Copyright &copy; 2023 - 2026 Juspay Technologies Pvt Ltd'
 
 # Configuration
 theme:
@@ -109,21 +109,21 @@ nav:
       - Installation: GETTING_STARTED.md
       - Setup & Configuration: SETUP.md
   - Features:
-      - '🔍 Error Analysis': features/error-analysis.md
-      - '🏗️ Repository Organization': features/repository-organization.md
-      - '🧠 Memory Bank': features/memory-bank.md
-      - '🤖 AI Integration': features/ai-integration.md
-      - '🐚 Shell Compatibility': features/shell-integration.md
+      - Error Analysis: features/error-analysis.md
+      - Repository Organization: features/repository-organization.md
+      - Memory Bank: features/memory-bank.md
+      - AI Integration: features/ai-integration.md
+      - Shell Compatibility: features/shell-integration.md
   - User Guide:
       - Command Reference: API.md
       - Common Workflows: user-guide/workflows.md
       - Troubleshooting: user-guide/troubleshooting.md
       - Best Practices: user-guide/best-practices.md
   - Memory Bank:
-      - Overview: memory-bank/README.md
-      - Project Context: memory-bank/project/
-      - Technical Docs: memory-bank/technical/
-      - Current Status: memory-bank/current/
+      - Overview: memory-bank/index.md
+      - Project Context: memory-bank/project.md
+      - Technical Docs: memory-bank/technical.md
+      - Current Status: memory-bank/current.md
   - Development:
       - Contributing: CONTRIBUTING.md
       - Code of Conduct: CODE_OF_CONDUCT.md
@@ -138,9 +138,3 @@ nav:
 # Extra CSS
 extra_css:
   - stylesheets/extra.css
-
-# Extra JavaScript
-extra_javascript:
-  - javascripts/mathjax.js
-  - https://polyfill.io/v3/polyfill.min.js?features=es6
-  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js

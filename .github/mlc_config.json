@@ -1,0 +1,39 @@
+{
+  "ignorePatterns": [
+    {
+      "pattern": "^https://github.com/juspay/shelly/compare"
+    },
+    {
+      "pattern": "^https://github.com/juspay/shelly/commit"
+    },
+    {
+      "pattern": "^https://github.com/juspay/shelly/tree"
+    },
+    {
+      "pattern": "^https://github.com/juspay/shelly/blob"
+    },
+    {
+      "pattern": "^https://github.com/juspay/shelly/issues"
+    },
+    {
+      "pattern": "^https://github.com/juspay/shelly/pull"
+    },
+    {
+      "pattern": "^https://localhost"
+    },
+    {
+      "pattern": "^http://localhost"
+    },
+    {
+      "pattern": "^https://127.0.0.1"
+    },
+    {
+      "pattern": "^http://127.0.0.1"
+    }
+  ],
+  "timeout": "20s",
+  "retryOn429": true,
+  "retryCount": 3,
+  "fallbackRetryDelay": "30s",
+  "aliveStatusCodes": [200, 206, 301, 302, 307, 308]
+}

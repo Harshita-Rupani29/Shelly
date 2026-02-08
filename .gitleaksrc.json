@@ -1,0 +1,152 @@
+{
+  "$schema": "https://raw.githubusercontent.com/gitleaks/gitleaks/main/config/gitleaks.config.json",
+  "title": "Gitleaks configuration for @juspay/shelly",
+  "description": "Custom gitleaks rules and allowlists for shelly",
+  "extend": {
+    "useDefault": true
+  },
+  "rules": [
+    {
+      "id": "project-api-key",
+      "description": "Project-specific API key pattern",
+      "regex": "(?i)(@juspay/shelly[_-]?api[_-]?key|api[_-]?key[_-]?@juspay/shelly)\\s*[=:]\\s*['\"]?([a-zA-Z0-9_\\-]{20,})['\"]?",
+      "secretGroup": 2,
+      "entropy": 3.5,
+      "keywords": ["api_key", "apikey", "api-key"],
+      "tags": ["api", "key", "@juspay/shelly"],
+      "severity": "high"
+    },
+    {
+      "id": "custom-bearer-token",
+      "description": "Bearer token in authorization headers",
+      "regex": "(?i)(bearer|authorization)\\s*[=:]\\s*['\"]?(Bearer\\s+)?([a-zA-Z0-9_\\-\\.]{20,})['\"]?",
+      "secretGroup": 3,
+      "entropy": 3.0,
+      "keywords": ["bearer", "authorization", "auth"],
+      "tags": ["token", "bearer", "auth"],
+      "severity": "high"
+    },
+    {
+      "id": "database-connection-url",
+      "description": "Database connection URL with credentials",
+      "regex": "(?i)(mongodb|postgres|postgresql|mysql|mariadb|redis|amqp|rabbitmq)://[^:]+:([^@]+)@[^\\s'\"]+",
+      "secretGroup": 2,
+      "keywords": ["mongodb", "postgres", "postgresql", "mysql", "mariadb", "redis", "amqp", "rabbitmq"],
+      "tags": ["database", "connection", "credentials"],
+      "severity": "critical"
+    },
+    {
+      "id": "private-key-block",
+      "description": "Private key in PEM format",
+      "regex": "-----BEGIN\\s+(RSA|DSA|EC|OPENSSH|PGP)?\\s*PRIVATE KEY(\\sBLOCK)?-----",
+      "keywords": ["BEGIN", "PRIVATE", "KEY"],
+      "tags": ["key", "private", "pem"],
+      "severity": "critical"
+    },
+    {
+      "id": "private-key-inline",
+      "description": "Base64 encoded private key content",
+      "regex": "(?i)(private[_-]?key|privatekey)\\s*[=:]\\s*['\"]?([A-Za-z0-9+/=]{50,})['\"]?",
+      "secretGroup": 2,
+      "entropy": 4.0,
+      "keywords": ["private_key", "privatekey", "private-key"],
+      "tags": ["key", "private", "encoded"],
+      "severity": "critical"
+    },
+    {
+      "id": "jwt-token",
+      "description": "JSON Web Token",
+      "regex": "eyJ[a-zA-Z0-9_-]*\\.eyJ[a-zA-Z0-9_-]*\\.[a-zA-Z0-9_-]*",
+      "keywords": ["eyJ"],
+      "tags": ["jwt", "token"],
+      "severity": "high"
+    },
+    {
+      "id": "generic-secret",
+      "description": "Generic secret or password assignment",
+      "regex": "(?i)(secret|password|passwd|pwd|token|credential)\\s*[=:]\\s*['\"]?([^\\s'\"]{8,})['\"]?",
+      "secretGroup": 2,
+      "entropy": 3.5,
+      "keywords": ["secret", "password", "passwd", "pwd", "token", "credential"],
+      "tags": ["secret", "password", "generic"],
+      "severity": "medium"
+    }
+  ],
+  "allowlist": {
+    "description": "Global allowlist for false positives",
+    "regexTarget": "match",
+    "regexes": [
+      "your-api-key-here",
+      "replace-with-your",
+      "your-secret-here",
+      "your-token-here",
+      "example-api-key",
+      "example-secret",
+      "example-token",
+      "test-api-key",
+      "test-secret",
+      "test-token",
+      "fake-api-key",
+      "fake-secret",
+      "fake-token",
+      "dummy-api-key",
+      "dummy-secret",
+      "dummy-token",
+      "placeholder",
+      "xxxxxxxx",
+      "\\*{4,}",
+      "<your[_-]?(api[_-]?key|secret|token|password)?>",
+      "\\$\\{[A-Z_]+\\}",
+      "\\{\\{[a-zA-Z_]+\\}\\}",
+      "process\\.env\\.[A-Z_]+",
+      "ENV\\[['\"][A-Z_]+['\"]\\]",
+      "localhost",
+      "127\\.0\\.0\\.1",
+      "0\\.0\\.0\\.0"
+    ],
+    "paths": [
+      "node_modules/**",
+      "dist/**",
+      "build/**",
+      "out/**",
+      ".git/**",
+      "docs/**",
+      "documentation/**",
+      "examples/**",
+      "example/**",
+      "test/**",
+      "tests/**",
+      "__tests__/**",
+      "spec/**",
+      "fixtures/**",
+      "__fixtures__/**",
+      "__mocks__/**",
+      "mocks/**",
+      "*.test.js",
+      "*.test.ts",
+      "*.spec.js",
+      "*.spec.ts",
+      "*.md",
+      "*.lock",
+      "package-lock.json",
+      "yarn.lock",
+      "pnpm-lock.yaml",
+      ".gitleaksignore",
+      ".gitleaksrc.json",
+      "CHANGELOG.md",
+      "LICENSE",
+      "LICENSE.md"
+    ],
+    "commits": [],
+    "stopwords": [
+      "example",
+      "sample",
+      "test",
+      "mock",
+      "fake",
+      "dummy",
+      "placeholder",
+      "template"
+    ]
+  }
+}
