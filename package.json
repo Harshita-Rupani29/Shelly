@@ -18,8 +18,18 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky install",
-    "pre-commit": "lint-staged"
+    "prepare": "husky",
+    "pre-commit": "lint-staged",
+    "dev": "tsc --watch",
+    "build:watch": "tsc --watch",
+    "clean": "rm -rf dist node_modules/.cache",
+    "test:watch": "tsc --watch & node --test --watch dist/tests/*.test.js",
+    "docs:build": "mkdocs build --strict --clean",
+    "docs:serve": "mkdocs serve",
+    "docs:gh-deploy": "mkdocs gh-deploy --force",
+    "validate": "npm run lint && npm run format:check",
+    "validate:all": "npm run validate && npm run test",
+    "pre-push": "npm run validate:all"
   },
   "keywords": [
     "cli",
@@ -97,7 +107,8 @@
     "prettier": "^3.0.0",
     "semantic-release": "^22.0.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "tsx": "^4.0.0"
   },
   "dependencies": {
     "@juspay/neurolink": "^8.41.0",

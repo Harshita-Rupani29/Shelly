@@ -1,0 +1,233 @@
+#!/usr/bin/env node
+/**
+ * Smart Test Runner for @juspay/shelly
+ *
+ * Intelligently runs tests based on changed files.
+ * Only runs tests related to modified source files.
+ *
+ * @generated 2026-02-08
+ * @owner juspay
+ *
+ * Usage:
+ *   node scripts/smart-test.cjs           # Run tests for changed files
+ *   node scripts/smart-test.cjs --all     # Run all tests
+ *   node scripts/smart-test.cjs --staged  # Run tests for staged files only
+ */
+
+const { execSync, spawn } = require('child_process');
+const path = require('path');
+const fs = require('fs');
+
+// ============================================================================
+// CONFIGURATION
+// ============================================================================
+
+const config = {
+  // Patterns for source files to test relationships
+  sourcePatterns: ['src/**/*.ts', 'src/**/*.js'],
+
+  // Patterns for test files
+  testPatterns: ['**/*.test.ts', '**/*.spec.ts', 'tests/**/*.ts'],
+
+  // Test command
+  testCommand: 'npm',
+  testArgs: ['run', 'test'],
+
+  // Mapping from source to test file patterns
+  testMapping: [
+    // TypeScript
+    { source: /^(.+)\.ts$/, test: '$1.test.ts' },
+    { source: /^(.+)\.ts$/, test: '$1.spec.ts' },
+    { source: /^(.+)\.tsx$/, test: '$1.test.tsx' },
+    { source: /^(.+)\.tsx$/, test: '$1.spec.tsx' },
+    // JavaScript
+    { source: /^(.+)\.js$/, test: '$1.test.js' },
+    { source: /^(.+)\.js$/, test: '$1.spec.js' },
+    { source: /^(.+)\.jsx$/, test: '$1.test.jsx' },
+    { source: /^(.+)\.jsx$/, test: '$1.spec.jsx' },
+    // src -> tests patterns
+    { source: /^src\/(.+)\.ts$/, test: 'tests/$1.test.ts' },
+    { source: /^src\/(.+)\.ts$/, test: 'tests/$1.spec.ts' },
+    { source: /^src\/(.+)\.tsx$/, test: 'tests/$1.test.tsx' },
+    { source: /^src\/(.+)\.tsx$/, test: 'tests/$1.spec.tsx' },
+    { source: /^src\/(.+)\.js$/, test: 'tests/$1.test.js' },
+    { source: /^src\/(.+)\.js$/, test: 'tests/$1.spec.js' },
+    { source: /^src\/(.+)\.jsx$/, test: 'tests/$1.test.jsx' },
+    { source: /^src\/(.+)\.jsx$/, test: 'tests/$1.spec.jsx' },
+  ],
+};
+
+// ============================================================================
+// HELPERS
+// ============================================================================
+
+/**
+ * Execute a command and return output.
+ */
+function exec(command, options = {}) {
+  try {
+    return execSync(command, {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+      ...options,
+    }).trim();
+  } catch (error) {
+    if (error.stdout) return error.stdout.trim();
+    throw error;
+  }
+}
+
+/**
+ * Get list of changed files from git.
+ */
+function getChangedFiles(mode = 'all') {
+  let command;
+
+  switch (mode) {
+    case 'staged':
+      command = 'git diff --cached --name-only --diff-filter=ACMR';
+      break;
+    case 'unstaged':
+      command = 'git diff --name-only --diff-filter=ACMR';
+      break;
+    case 'all':
+    default:
+      // Both staged and unstaged
+      const staged = exec('git diff --cached --name-only --diff-filter=ACMR');
+      const unstaged = exec('git diff --name-only --diff-filter=ACMR');
+      const untracked = exec('git ls-files --others --exclude-standard');
+      const all = [staged, unstaged, untracked].filter(Boolean).join('\n');
+      return [...new Set(all.split('\n').filter(Boolean))];
+  }
+
+  const output = exec(command);
+  return output ? output.split('\n').filter(Boolean) : [];
+}
+
+/**
+ * Find related test file for a source file.
+ */
+function findTestFile(sourceFile) {
+  for (const mapping of config.testMapping) {
+    if (mapping.source.test(sourceFile)) {
+      const testPath = sourceFile.replace(mapping.source, mapping.test);
+      if (fs.existsSync(testPath)) {
+        return testPath;
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Check if file is a test file.
+ */
+function isTestFile(file) {
+  return (
+    file.includes('.test.') ||
+    file.includes('.spec.') ||
+    file.startsWith('tests/')
+  );
+}
+
+/**
+ * Get test files to run based on changed files.
+ */
+function getTestsToRun(changedFiles) {
+  const testsToRun = new Set();
+
+  for (const file of changedFiles) {
+    // Skip non-TypeScript/JavaScript files
+    if (!file.match(/\.(ts|js|tsx|jsx)$/)) {
+      continue;
+    }
+
+    // If it's a test file, add it directly
+    if (isTestFile(file)) {
+      if (fs.existsSync(file)) {
+        testsToRun.add(file);
+      }
+      continue;
+    }
+
+    // Find related test file
+    const testFile = findTestFile(file);
+    if (testFile) {
+      testsToRun.add(testFile);
+    }
+  }
+
+  return Array.from(testsToRun);
+}
+
+/**
+ * Run tests for specified files.
+ */
+function runTests(testFiles) {
+  if (testFiles.length === 0) {
+    console.log('✅ No tests to run for changed files');
+    process.exit(0);
+  }
+
+  console.log(`\n🧪 Running ${testFiles.length} test file(s):\n`);
+  testFiles.forEach((f) => console.log(`   - ${f}`));
+  console.log('');
+
+  // Build test command with file patterns
+  const args = [...config.testArgs, ...testFiles];
+
+  const result = spawn(config.testCommand, args, {
+    stdio: 'inherit',
+    shell: true,
+  });
+
+  result.on('close', (code) => {
+    process.exit(code);
+  });
+}
+
+// ============================================================================
+// MAIN
+// ============================================================================
+
+function main() {
+  const args = process.argv.slice(2);
+
+  // Parse arguments
+  const runAll = args.includes('--all') || args.includes('-a');
+  const stagedOnly = args.includes('--staged') || args.includes('-s');
+  const verbose = args.includes('--verbose') || args.includes('-v');
+
+  // Run all tests
+  if (runAll) {
+    console.log('🧪 Running all tests...\n');
+    const result = spawn(config.testCommand, config.testArgs, {
+      stdio: 'inherit',
+      shell: true,
+    });
+    result.on('close', (code) => process.exit(code));
+    return;
+  }
+
+  // Get changed files
+  const mode = stagedOnly ? 'staged' : 'all';
+  const changedFiles = getChangedFiles(mode);
+
+  if (verbose) {
+    console.log(`\n📁 Changed files (${mode}):`);
+    changedFiles.forEach((f) => console.log(`   - ${f}`));
+  }
+
+  if (changedFiles.length === 0) {
+    console.log('ℹ️  No changed files detected');
+    process.exit(0);
+  }
+
+  // Find tests to run
+  const testsToRun = getTestsToRun(changedFiles);
+
+  // Run tests
+  runTests(testsToRun);
+}
+
+main();

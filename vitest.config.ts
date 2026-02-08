@@ -1,0 +1,173 @@
+/**
+ * Vitest Configuration for @juspay/shelly
+ *
+ * Modern testing framework with first-class TypeScript support.
+ * https://vitest.dev/config/
+ *
+ * @generated 2026-02-08
+ * @owner juspay
+ */
+
+import { defineConfig } from 'vitest/config';
+import path from 'path';
+
+export default defineConfig({
+  test: {
+    // ========================================================================
+    // ENVIRONMENT
+    // ========================================================================
+
+    /**
+     * Test environment. Options:
+     * - 'node': Node.js environment (default for backend)
+     * - 'jsdom': Browser-like environment (for frontend/React)
+     * - 'happy-dom': Faster jsdom alternative
+     */
+    environment: 'node',
+
+    /**
+     * Enable global test APIs (describe, it, expect) without imports.
+     */
+    globals: true,
+
+    // ========================================================================
+    // FILE PATTERNS
+    // ========================================================================
+
+    include: [
+      'src/**/*.{test,spec}.{js,mjs,ts,mts,tsx}',
+      'tests/**/*.{test,spec}.{js,mjs,ts,mts,tsx}',
+    ],
+
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/build/**',
+      '**/.{git,cache,output}/**',
+    ],
+
+    // ========================================================================
+    // SETUP & TEARDOWN
+    // ========================================================================
+
+    /**
+     * Setup files to run before each test file.
+     */
+    setupFiles: ['./tests/setup.ts'],
+
+    // ========================================================================
+    // TIMEOUTS
+    // ========================================================================
+
+    testTimeout: 10000,
+    hookTimeout: 30000,
+    teardownTimeout: 10000,
+
+    // ========================================================================
+    // PARALLELIZATION
+    // ========================================================================
+
+    fileParallelism: true,
+    isolate: true,
+
+    // ========================================================================
+    // COVERAGE
+    // ========================================================================
+
+    coverage: {
+      enabled: false, // Run with: vitest --coverage
+      provider: 'v8',
+      reportsDirectory: './coverage',
+      reporter: ['text', 'json', 'html', 'lcov'],
+
+      include: ['src/**/*.{js,ts}'],
+
+      exclude: [
+        'node_modules/**',
+        'dist/**',
+        'build/**',
+        'src/**/*.d.ts',
+        'src/**/*.{test,spec}.ts',
+        'src/**/index.ts',
+        'src/**/types.ts',
+        'tests/**',
+      ],
+
+      thresholds: {
+        statements: 80,
+        branches: 75,
+        functions: 80,
+        lines: 80,
+      },
+
+      clean: true,
+      all: true,
+    },
+
+    // ========================================================================
+    // REPORTERS
+    // ========================================================================
+
+    reporters: ['default'],
+
+    // ========================================================================
+    // MOCKING
+    // ========================================================================
+
+    clearMocks: true,
+    restoreMocks: true,
+    mockReset: false,
+
+    // ========================================================================
+    // WATCH MODE
+    // ========================================================================
+
+    watch: true,
+
+    // ========================================================================
+    // DEBUGGING
+    // ========================================================================
+
+    retry: 0, // Increase for flaky tests
+
+    // ========================================================================
+    // TYPE CHECKING
+    // ========================================================================
+
+    typecheck: {
+      enabled: false, // Enable with: vitest typecheck
+      include: ['**/*.{test,spec}.{ts,tsx}'],
+    },
+  },
+
+  // ==========================================================================
+  // RESOLVE ALIASES
+  // ==========================================================================
+
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      '@tests': path.resolve(__dirname, './tests'),
+      '@utils': path.resolve(__dirname, './src/utils'),
+      '@services': path.resolve(__dirname, './src/services'),
+      '@types': path.resolve(__dirname, './src/types'),
+    },
+  },
+
+  // ==========================================================================
+  // ESBUILD OPTIONS
+  // ==========================================================================
+
+  esbuild: {
+    target: 'esnext',
+  },
+
+  // ==========================================================================
+  // DEFINE GLOBALS
+  // ==========================================================================
+
+  define: {
+    __TEST__: true,
+    'process.env.NODE_ENV': JSON.stringify('test'),
+  },
+});

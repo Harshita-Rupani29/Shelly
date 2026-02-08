@@ -1,0 +1,11 @@
+/* Shelly docs custom styles */
+
+/* Slightly tighter line height for code blocks */
+.md-typeset code {
+  font-size: 0.85em;
+}
+
+/* Mermaid diagram background */
+.md-typeset .mermaid {
+  margin: 1em 0;
+}
