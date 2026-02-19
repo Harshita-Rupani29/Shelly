@@ -1,4 +1,5 @@
 import { NpmService } from '../services/npmService.js';
+import type { Platform } from '../services/platformDetector.js';
 import inquirer from 'inquirer';
 import { exec } from 'child_process';
 import { platform } from 'os';
@@ -82,6 +83,7 @@ export class NpmTrustedPublishingCommand {
         owner: repoInfo.owner,
         repo: repoInfo.repo,
         workflowFilename: workflow.filename,
+        platform: repoInfo.platform,
       });
     } catch (error) {
       console.error('\n❌ Setup failed:', (error as Error).message);
@@ -125,16 +127,29 @@ export class NpmTrustedPublishingCommand {
       // Get repo info
       const repoInfo = await this.npmService.getGitRepoInfo();
       if (repoInfo) {
-        console.log(`\n🔗 Repository: ${repoInfo.owner}/${repoInfo.repo}`);
+        const platformName = repoInfo.platform === 'bitbucket' ? 'Bitbucket' : 'GitHub';
+        console.log(`\n🔗 Repository: ${repoInfo.owner}/${repoInfo.repo} (${platformName})`);
       }
 
       // Find and analyze workflows
       const workflow = await this.npmService.findReleaseWorkflow();
       if (workflow) {
-        console.log(`\n📄 Release workflow: ${workflow.filename}`);
-        console.log(
-          `   id-token permission: ${workflow.hasIdTokenPermission ? '✅ Configured' : '❌ Missing'}`
-        );
+        const isBitbucket = workflow.filename === 'bitbucket-pipelines.yml';
+        console.log(`\n📄 Release workflow: ${workflow.filename}${isBitbucket ? ' (Bitbucket)' : ''}`);
+
+        if (isBitbucket) {
+          console.log(
+            `   oidc: true: ${workflow.hasOidcEnabled ? '✅ Configured' : '❌ Missing'}`
+          );
+          console.log(
+            `   BITBUCKET_STEP_OIDC_TOKEN: ${workflow.hasBitbucketOidcToken ? '✅ Used' : '❌ Not used'}`
+          );
+        } else {
+          console.log(
+            `   id-token permission: ${workflow.hasIdTokenPermission ? '✅ Configured' : '❌ Missing'}`
+          );
+        }
+
         console.log(
           `   NPM_TOKEN secret: ${workflow.hasNpmTokenSecret ? '⚠️  Still in use' : '✅ Not used'}`
         );
@@ -156,10 +171,12 @@ export class NpmTrustedPublishingCommand {
 
         // Overall status - check for semantic-release or direct npm publish
         console.log('\n📊 Overall Status:');
-        const isProperlyConfigured = workflow.usesSemanticRelease
-          ? workflow.hasIdTokenPermission && workflow.hasProvenanceConfig
-          : workflow.hasIdTokenPermission &&
-            workflow.publishCommands.some((c) => c.includes('--provenance'));
+        const isProperlyConfigured = isBitbucket
+          ? workflow.hasOidcEnabled && workflow.hasBitbucketOidcToken
+          : workflow.usesSemanticRelease
+            ? workflow.hasIdTokenPermission && workflow.hasProvenanceConfig
+            : workflow.hasIdTokenPermission &&
+              workflow.publishCommands.some((c) => c.includes('--provenance'));
 
         if (isProperlyConfigured && !workflow.hasNpmTokenSecret) {
           console.log('   ✅ Workflow is configured for OIDC trusted publishing');
@@ -171,11 +188,20 @@ export class NpmTrustedPublishingCommand {
           );
         } else {
           console.log('   ⚠️  Workflow needs updates for OIDC trusted publishing');
-          if (!workflow.hasIdTokenPermission) {
-            console.log('      - Missing id-token: write permission');
-          }
-          if (workflow.usesSemanticRelease && !workflow.hasProvenanceConfig) {
-            console.log('      - Missing NPM_CONFIG_PROVENANCE: true');
+          if (isBitbucket) {
+            if (!workflow.hasOidcEnabled) {
+              console.log('      - Missing oidc: true in publish step');
+            }
+            if (!workflow.hasBitbucketOidcToken) {
+              console.log('      - Not using BITBUCKET_STEP_OIDC_TOKEN');
+            }
+          } else {
+            if (!workflow.hasIdTokenPermission) {
+              console.log('      - Missing id-token: write permission');
+            }
+            if (workflow.usesSemanticRelease && !workflow.hasProvenanceConfig) {
+              console.log('      - Missing NPM_CONFIG_PROVENANCE: true');
+            }
           }
           if (workflow.hasNpmTokenSecret) {
             console.log('      - NPM_TOKEN still in use (can be removed after setup)');
@@ -184,7 +210,7 @@ export class NpmTrustedPublishingCommand {
         }
       } else {
         console.log('\n⚠️  No release workflow found');
-        console.log('   Looking for: release.yml, publish.yml, npm-publish.yml, ci.yml');
+        console.log('   Looking for: release.yml, publish.yml, npm-publish.yml, ci.yml, bitbucket-pipelines.yml');
       }
     } catch (error) {
       console.error('\n❌ Status check failed:', (error as Error).message);
@@ -436,12 +462,13 @@ export class NpmTrustedPublishingCommand {
     const repoInfo = await this.npmService.getGitRepoInfo();
 
     if (!repoInfo) {
-      console.error('   ❌ Could not detect GitHub repository');
-      console.error('   💡 Make sure you have a git remote named "origin" pointing to GitHub');
+      console.error('   ❌ Could not detect repository');
+      console.error('   💡 Make sure you have a git remote named "origin" pointing to GitHub or Bitbucket');
       return null;
     }
 
-    console.log(`   ✅ Repository: ${repoInfo.owner}/${repoInfo.repo}\n`);
+    const platformName = repoInfo.platform === 'bitbucket' ? 'Bitbucket' : 'GitHub';
+    console.log(`   ✅ Repository: ${repoInfo.owner}/${repoInfo.repo} (${platformName})\n`);
     return repoInfo;
   }
 
@@ -454,12 +481,13 @@ export class NpmTrustedPublishingCommand {
 
     if (!workflow) {
       console.error('   ❌ No release workflow found');
-      console.error('   💡 Looking for: release.yml, publish.yml, npm-publish.yml, ci.yml');
+      console.error('   💡 Looking for: release.yml, publish.yml, npm-publish.yml, ci.yml, or bitbucket-pipelines.yml');
       console.error('   💡 Create a workflow that runs "npm publish"\n');
       return null;
     }
 
-    console.log(`   ✅ Found: ${workflow.filename}`);
+    const isBitbucket = workflow.filename === 'bitbucket-pipelines.yml';
+    console.log(`   ✅ Found: ${workflow.filename}${isBitbucket ? ' (Bitbucket)' : ''}`);
     if (workflow.publishCommands.length > 0) {
       console.log(`   ✅ Contains npm publish commands\n`);
     } else {
@@ -494,13 +522,29 @@ export class NpmTrustedPublishingCommand {
     publishCommands: string[];
     usesSemanticRelease?: boolean;
     hasProvenanceConfig?: boolean;
+    hasOidcEnabled?: boolean;
+    hasBitbucketOidcToken?: boolean;
+    filename: string;
   }): void {
+    const isBitbucket = workflow.filename === 'bitbucket-pipelines.yml';
+
     console.log('📊 Current workflow status:');
+
+    if (isBitbucket) {
+      console.log(
+        `   oidc: true: ${workflow.hasOidcEnabled ? '✅ Present' : '❌ Missing'}`
+      );
+      console.log(
+        `   BITBUCKET_STEP_OIDC_TOKEN: ${workflow.hasBitbucketOidcToken ? '✅ Used' : '❌ Not used'}`
+      );
+    } else {
+      console.log(
+        `   id-token permission: ${workflow.hasIdTokenPermission ? '✅ Present' : '❌ Missing'}`
+      );
+    }
+
     console.log(
-      `   id-token permission: ${workflow.hasIdTokenPermission ? '✅ Present' : '❌ Missing'}`
-    );
-    console.log(
-      `   NPM_TOKEN usage: ${workflow.hasNpmTokenSecret ? '⚠️  Found (will be commented out)' : '✅ Not used'}`
+      `   NPM_TOKEN usage: ${workflow.hasNpmTokenSecret ? '⚠️  Found (will be updated)' : '✅ Not used'}`
     );
 
     if (workflow.usesSemanticRelease) {
@@ -582,9 +626,11 @@ export class NpmTrustedPublishingCommand {
    */
   private async runInteractiveNpmSetup(
     packageName: string,
-    config: { owner: string; repo: string; workflowFilename: string }
+    config: { owner: string; repo: string; workflowFilename: string; platform?: Platform }
   ): Promise<void> {
+    const isBitbucket = config.platform === 'bitbucket';
     const settingsUrl = `https://www.npmjs.com/package/${packageName}`;
+    const platformName = isBitbucket ? 'Bitbucket' : 'GitHub';
 
     // Header
     console.log('\n');
@@ -592,7 +638,7 @@ export class NpmTrustedPublishingCommand {
     console.log('  │                                                              │');
     console.log('  │   🔐  NPM TRUSTED PUBLISHING SETUP                           │');
     console.log('  │                                                              │');
-    console.log('  │   Configure OIDC authentication on npmjs.com                 │');
+    console.log(`  │   Configure OIDC authentication on npmjs.com (${platformName.padEnd(10)})  │`);
     console.log('  │                                                              │');
     console.log('  ╰──────────────────────────────────────────────────────────────╯');
     console.log('\n');
@@ -638,7 +684,7 @@ export class NpmTrustedPublishingCommand {
     console.log('  📍 On the npm package page:\n');
     console.log('     1. Click the "Settings" tab (gear icon) ⚙️');
     console.log('     2. Scroll down to find "Trusted Publisher" section');
-    console.log('     3. Click the "GitHub Actions" button\n');
+    console.log(`     3. Click the "${platformName} Actions" button\n`);
 
     console.log('  ┌─────────────────────────────────────────────────────┐');
     console.log('  │  npm Package Page                                   │');
@@ -659,11 +705,21 @@ export class NpmTrustedPublishingCommand {
     console.log('  📝 Enter these exact values in the npm form:\n');
     console.log('  ┌─────────────────────────────────────────────────────────────┐');
     console.log('  │                                                             │');
-    console.log(`  │   Organization/User:   ${this.highlight(config.owner)}`);
-    console.log('  │                                                             │');
-    console.log(`  │   Repository:          ${this.highlight(config.repo)}`);
-    console.log('  │                                                             │');
-    console.log(`  │   Workflow filename:   ${this.highlight(config.workflowFilename)}`);
+
+    if (isBitbucket) {
+      console.log(`  │   Workspace:          ${this.highlight(config.owner)}`);
+      console.log('  │                                                             │');
+      console.log(`  │   Repository:         ${this.highlight(config.repo)}`);
+      console.log('  │                                                             │');
+      console.log('  │   Pipeline UUID:      (get from Bitbucket settings)        │');
+    } else {
+      console.log(`  │   Organization/User:   ${this.highlight(config.owner)}`);
+      console.log('  │                                                             │');
+      console.log(`  │   Repository:          ${this.highlight(config.repo)}`);
+      console.log('  │                                                             │');
+      console.log(`  │   Workflow filename:   ${this.highlight(config.workflowFilename)}`);
+    }
+
     console.log('  │                                                             │');
     console.log('  │   Environment:         (leave empty)                        │');
     console.log('  │                                                             │');
@@ -698,10 +754,11 @@ export class NpmTrustedPublishingCommand {
     console.log('  ├────┼─────────────────────────────────────────────────────────┤');
     console.log('  │ 2  │ Trigger a release to test OIDC publishing               │');
     console.log('  ├────┼─────────────────────────────────────────────────────────┤');
-    console.log('  │ 3  │ (Optional) Remove NPM_TOKEN secret from GitHub          │');
+    console.log(`  │ 3  │ (Optional) Remove NPM_TOKEN from ${platformName.padEnd(17)}│`);
     console.log('  └────┴─────────────────────────────────────────────────────────┘\n');
 
-    console.log(`  🔗 Remove token: https://github.com/${config.owner}/${config.repo}/settings/secrets/actions\n`);
+    const secretsUrl = this.npmService.getSecretsUrl(config.owner, config.repo, config.platform || 'github');
+    console.log(`  🔗 Remove token: ${secretsUrl}\n`);
     console.log('  📖 Docs: https://docs.npmjs.com/trusted-publishers\n');
   }
 
@@ -710,9 +767,12 @@ export class NpmTrustedPublishingCommand {
    */
   private displayQuickReference(
     _packageName: string,
-    config: { owner: string; repo: string; workflowFilename: string },
+    config: { owner: string; repo: string; workflowFilename: string; platform?: Platform },
     settingsUrl: string
   ): void {
+    const isBitbucket = config.platform === 'bitbucket';
+    const platformName = isBitbucket ? 'Bitbucket' : 'GitHub';
+
     console.log('\n');
     console.log('  ╭──────────────────────────────────────────────────────────────╮');
     console.log('  │  📋 QUICK REFERENCE - Complete Setup Later                   │');
@@ -720,10 +780,16 @@ export class NpmTrustedPublishingCommand {
 
     console.log(`  🔗 URL: ${settingsUrl}\n`);
 
-    console.log('  📝 Values to enter:\n');
-    console.log(`     • Organization/User:  ${config.owner}`);
-    console.log(`     • Repository:         ${config.repo}`);
-    console.log(`     • Workflow filename:  ${config.workflowFilename}`);
+    console.log(`  📝 Values to enter (${platformName}):\n`);
+    if (isBitbucket) {
+      console.log(`     • Workspace:          ${config.owner}`);
+      console.log(`     • Repository:         ${config.repo}`);
+      console.log('     • Pipeline UUID:      (get from Bitbucket settings)');
+    } else {
+      console.log(`     • Organization/User:  ${config.owner}`);
+      console.log(`     • Repository:         ${config.repo}`);
+      console.log(`     • Workflow filename:  ${config.workflowFilename}`);
+    }
     console.log('     • Environment:        (leave empty)\n');
 
     console.log('  📖 Docs: https://docs.npmjs.com/trusted-publishers\n');
